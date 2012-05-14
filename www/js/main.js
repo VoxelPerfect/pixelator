@@ -27,7 +27,7 @@ function createDebugBox(layer) {
     var node = new anima.Node('debugBox');
     layer.addNode(node);
 
-    node.setBackground(null, null, layer.getScene().getSize().width, 30);
+    node.setSize(layer.getScene().getSize().width, 30);
     node.setPosition({
         x:0,
         y:0.1
@@ -55,7 +55,7 @@ function createPlatform(layer) {
     var body = new anima.Body('platform');
     layer.addNode(body);
 
-    body.setBackground(null, null, 197, 22);
+    body.setSize(197, 22);
     var physicalSize = body.getPhysicalSize();
     body._physicalSize.height /= 2;
 
@@ -84,7 +84,7 @@ function setCharacterPointsSvg(fixDef) {
         {x:60, y:155.68},
         {x:99, y:107.68},
         {x:145, y:102.68},
-        {x:182, y:142.68},
+        {x:182, y:142.68}
     ];
 }
 
@@ -135,7 +135,25 @@ function createCharacter(layer) {
     var body = new anima.Body('character');
     layer.addNode(body);
 
-    body.setBackground(null, getImageUrl(level, 'character_start'), 150, 190);
+    body.setSize(150, 190);
+    body.addBackground(null, getImageUrl(level, 'character_start'), {
+        row:6,
+        columns:6,
+        totalSprites:31,
+        duration:2000
+    }, 'start');
+    body.addBackground(null, getImageUrl(level, 'character_idle'), {
+        row:8,
+        columns:8,
+        totalSprites:61,
+        duration:2000
+    }, 'idle');
+    body.addBackground(null, getImageUrl(level, 'character_attack'), {
+        row:8,
+        columns:8,
+        totalSprites:61,
+        duration:2000
+    }, 'attack');
 
     var bodyDef = new b2BodyDef;
     bodyDef.type = b2Body.b2_dynamicBody;
@@ -207,35 +225,9 @@ function animateCharacter(character, type) {
         animator.endAnimation(animationId);
     }
 
-    var duration;
-    if (type == 'start') {
-        character.setBackground(null, getImageUrl(level, 'character_start'), 150, 190);
-        character.setSpriteGrid({
-            row:6,
-            columns:6,
-            totalSprites:31
-        });
-        duration = 2000;
-    } else if (type = 'idle') {
-        character.setBackground(null, getImageUrl(level, 'character_idle'), 150, 190);
-        character.setSpriteGrid({
-            row:8,
-            columns:8,
-            totalSprites:61
-        });
-        duration = 2000;
-    } else if (type == 'attack') {
-        character.setBackground(null, getImageUrl(level, 'character_attack'), 150, 190);
-        character.setSpriteGrid({
-            row:8,
-            columns:8,
-            totalSprites:61
-        });
-        duration = 2000;
-    } else {
-        return;
-    }
+    var duration = character.getSpriteSheetDuration();
     character.set('animationType', type);
+    character.setActiveBackground(type);
 
     animationId = animator.addAnimation({
         interpolateValuesFn:function (animator, t) {
@@ -264,13 +256,12 @@ function createArrow(layer) {
 
     var arrowWidth = 160;
     var arrowHeight = 77;
-    node.setBackground(null, getImageUrl(layer.getScene(), 'arrow'), arrowWidth, arrowHeight);
-    var spriteGrid = {
+    node.setSize(arrowWidth, arrowHeight);
+    node.addBackground(null, getImageUrl(layer.getScene(), 'arrow'), {
         rows:5,
         columns:6,
         totalSprites:29
-    };
-    node.setSpriteGrid(spriteGrid);
+    });
     node.setPosition({
         x:arrowX,
         y:arrowY
@@ -282,7 +273,7 @@ function createArrow(layer) {
     node.setAngle(anima.toRadians(40));
 
     var arrow = node;
-    var totalSprites = spriteGrid.totalSprites;
+    var totalSprites = node.getTotalSprites();
     node.getCanvas().on('vdrag', function (event, vtype) {
 
         if (vtype == 'dragstart') {
@@ -357,13 +348,12 @@ function createEnemyPouf(layer, id, enemyX, enemyY) {
 
     var poufidth = 100;
     var poufHeight = 100;
-    node.setBackground(null, getImageUrl(layer.getScene(), 'pouf'), poufidth, poufHeight);
-    var spriteGrid = {
+    node.setSize(poufidth, poufHeight);
+    node.addBackground(null, getImageUrl(layer.getScene(), 'pouf'), {
         rows:3,
         columns:5,
         totalSprites:14
-    };
-    node.setSpriteGrid(spriteGrid);
+    });
     node.setPosition({
         x:poufX,
         y:poufY
@@ -384,13 +374,13 @@ function createEnemy(layer, id, posX, posY, animationOffset) {
     var body = new anima.Body(id);
     layer.addNode(body);
 
-    body.setBackground(null, getImageUrl(level, 'enemy'), 120, 120);
-    var physicalSize = body.getPhysicalSize();
-    body.setSpriteGrid({
+    body.setSize(120, 120);
+    body.addBackground(null, getImageUrl(level, 'enemy'), {
         row:7,
         columns:8,
         totalSprites:50
     });
+    var physicalSize = body.getPhysicalSize();
     var physicalSize = body.getPhysicalSize();
 
     var bodyDef = new b2BodyDef;
@@ -429,7 +419,7 @@ function createEnemy(layer, id, posX, posY, animationOffset) {
         loop:true});
     body.set('moveId', moveId);
 
-    createEnemyPouf(layer, id, posX - 1.5 * physicalSize.width, posY - 0.2 * physicalSize.height);
+    createEnemyPouf(layer, id, posX - 0.5 * physicalSize.width, posY - 0.2 * physicalSize.height);
 
     /*
      var boomSound = new anima.Sound(id + 'boom', 'resources/sounds/boom.mp3');
@@ -443,7 +433,7 @@ function createLevel0() {
 
     var level = new anima.Level('level0', 2.0 * WORLD_SCALE, new b2Vec2(0, GRAVITY)); // 2m wide, gravity = 9.81 m/sec2
     canvas.addScene(level);
-    level.setBackground('black', getImageUrl(level, 'background', 'jpg'));
+    level.addBackground('black', getImageUrl(level, 'background', 'jpg'));
 
     var layer;
 
@@ -543,8 +533,8 @@ function createLevel0() {
 
     var scoreDisplay = new anima.ext.ScoreDisplay(level, {
         layerId:'score',
-        spriteSheet:getImageUrl(level, 'numbers'),
-        spriteGrid:{
+        spriteSheetUrl:getImageUrl(level, 'numbers'),
+        spriteSheet:{
             rows:3,
             columns:4,
             totalSprites:12
@@ -561,7 +551,7 @@ function createLevel0() {
 $('#mainPage').live('pageshow', function (event, ui) {
 
     canvas = new anima.Canvas('main-canvas', DEBUG);
-    canvas.setBackground(null, null, 1575, 787);
+    canvas.setSize(1575, 787);
 
     createLevel0();
 
