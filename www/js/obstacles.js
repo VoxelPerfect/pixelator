@@ -17,12 +17,38 @@ function createObstacleBox(layer, id, type, posX, posY) {
 
     var fixDef = new b2FixtureDef;
     fixDef.shape = new b2PolygonShape;
-    fixDef.density = CHARACTER_DENSITY;
-    fixDef.friction = 0.5;
+    fixDef.density = 8.0;
+    fixDef.friction = 2;
     fixDef.restitution = 0.2;
     fixDef.shape.SetAsBox(physicalSize.width / 2, physicalSize.height / 2);
 
     body.define(bodyDef, fixDef);
+
+    body.setAwakeListener(function (body, awake) {
+
+        if (!awake && body.get('hit')) {
+            body.fadeOut(400, function () {
+                body.getPhysicalBody().SetActive(false);
+            });
+        }
+    });
+
+    body.setLogic(function (body) {
+
+        var physicalBody = body.getPhysicalBody();
+        if (physicalBody.IsAwake()) {
+            var center = physicalBody.GetWorldCenter();
+            if (center.y < (0 - body.getPhysicalSize().height * 2)
+                || center.y > level.getPhysicalSize().height
+                || center.x < 0) {
+
+                body.hide();
+                physicalBody.SetActive(false);
+            }
+        }
+    });
+
+    return body;
 }
 
 function createObstaclePlatform(layer) {
@@ -37,7 +63,7 @@ function createObstaclePlatform(layer) {
     layer.addNode(body);
 
     body.setSize(350, 22);
-    body.addBackground('red');
+    //body.addBackground('red');
     var physicalSize = body.getPhysicalSize();
 
     var bodyDef = new b2BodyDef;
@@ -58,25 +84,26 @@ function createObstaclePlatform(layer) {
 
 function createObstacles(layer) {
 
-    var columns = 2;
+    var columns = 3;
+    var rows = 8;
 
     var platform = createObstaclePlatform(layer);
-    var y0 = platform.getPosition().y - platform.getSize().height / 2 - 5;
+    var y0 = platform.getPosition().y - platform.getSize().height / 2 - 40;
     var x0 = platform.getPosition().x - platform.getSize().width / 2 + 70;
 
     var height = layer.getScene().getSize().height;
 
     var ps = platform.getLevel().getPhysicsScale();
 
-    var id, type, posX, posY;
-    for (i = 0; i < columns; i++) {
+    var id, type, posX, posY, box;
+    for (var i = 0; i < columns; i++) {
         posX = x0 + (i * (68 + 50));
-        for (j = 0; j < 10; j++) {
+        for (var j = 0; j < (rows - 2 * i); j++) {
             id = i + '-' + j;
             type = (j % 2) ? 'white' : 'bomb';
             posY = y0 - j * 60;
 
-            createObstacleBox(layer, id, type, posX / ps, posY / ps);
+            box = createObstacleBox(layer, id, type, posX / ps, posY / ps);
         }
     }
 }

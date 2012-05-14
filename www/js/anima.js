@@ -1,6 +1,6 @@
 var anima = {};
 
-anima.version = '0.9.2 build 1';
+anima.version = '0.9.2 build 3';
 
 anima.isIE = false;
 anima.isIE8 = false;
@@ -742,19 +742,23 @@ anima.RendererCSS3 = Class.extend({
 
         var x = (node._position.x - node._origin.x * node._size.width + 0.5) << 0;
         var y = (node._position.y - node._origin.y * node._size.height + 0.5) << 0;
-        var translation = 'translate(' + x + 'px, ' + y + 'px)';
+        var transformation = 'translate(' + x + 'px, ' + y + 'px)';
 
-        var scale = ' scale(' + node._scale.x + ', ' + node._scale.y + ')';
-
-        var rotation = '';
-        if (node._angle && node._angle != 0) {
-            var degrees = -anima.toDegrees(node._angle);
-            rotation = 'rotate(' + degrees + 'deg) ';
+        var sx = node._scale.x;
+        var sy = node._scale.y;
+        if (sx != 1 && sy != 1) {
+            transformation += ' scale(' + sx + ', ' + sy + ')';
         }
 
-        var acceleration = anima.isWebkit ? ' translateZ(0)' : '';
+        if (node._angle && Math.abs(node._angle) > 0.1) {
+            var degrees = -anima.toDegrees(node._angle);
+            transformation += ' rotate(' + degrees + 'deg)';
+        }
 
-        var transformation = translation + scale + rotation + acceleration;
+        if (anima.isWebkit) {
+            transformation += ' translateZ(0)';
+        }
+
         node._element$.css(anima.cssVendorPrefix + 'transform', transformation);
 
         if (node._resizeHandler && node.isVisible()) {
@@ -2460,11 +2464,11 @@ anima.Canvas = anima.Node.extend({
                     this._step(scene);
                 }
 
-                this._animator.animate();
-
                 if (!sleeping) {
                     scene._update();
                 }
+
+                this._animator.animate();
 
                 return;
             }
@@ -2732,20 +2736,9 @@ anima.Level = anima.Scene.extend({
         for (var id in this._dynamicBodies) {
             node = this._dynamicBodies[id];
             if (node._body.IsAwake()) {
-                this._updateBody(node);
+                node._update();
             }
         }
-    },
-
-    _updateBody:function (node) {
-
-        var center = node._body.GetWorldCenter();
-        node._position.x = (center.x /* + node._centroidOffset.x */) * this._physicsScale;
-        node._position.y = (center.y /* + node._centroidOffset.y */) * this._physicsScale;
-
-        node._angle = -node._body.GetAngle();
-
-        this._renderer.updateTransform(node);
     },
 
     _registerContactListener:function () {
@@ -2842,6 +2835,7 @@ anima.Level = anima.Scene.extend({
 
         this._calculateCentroidOffset();
 
+        this._update();
         this._renderer.updateAll(this);
 
         this.getLevel()._addDynamicBody(this);
@@ -2927,6 +2921,19 @@ anima.Level = anima.Scene.extend({
     },
 
     /* internal methods */
+
+    _update:function () {
+
+        var level = this._layer._scene;
+
+        var center = this._body.GetWorldCenter();
+        this._position.x = (center.x /* + this._centroidOffset.x */) * level._physicsScale;
+        this._position.y = (center.y /* + this._centroidOffset.y */) * level._physicsScale;
+
+        this._angle = -this._body.GetAngle();
+
+        this._renderer.updateTransform(this);
+    },
 
     _checkAwake:function () {
 

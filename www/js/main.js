@@ -1,4 +1,3 @@
-
 function createLevel0() {
 
     var level = new anima.Level('level0', 2.0 * WORLD_SCALE, new b2Vec2(0, GRAVITY)); // 2m wide, gravity = 9.81 m/sec2
@@ -38,19 +37,15 @@ function createLevel0() {
             return;
         }
 
-        if (idA == 'character' && (idB == 'sock' || idB == 'tie' || idB == 'slip')) {
-            if (!bodyB.get('hit')) {
-                bodyB.set('hit', true);
-                //bodyB.get('boom').play();
-                bodyB.fadeOut(400, function () {
-                    bodyB.hide();
-                    var physicalBody = bodyB.getPhysicalBody();
-                    physicalBody.SetActive(false);
-                    level.getWorld().DestroyBody(physicalBody);
+        if (idA.startsWith('box') && (idB.startsWith('enemy') || idB == 'character')) {
+            bodyA.set('hit', true);
+        }
+        if (idB.startsWith('box') && (idA.startsWith('enemy') || idA == 'character')) {
+            bodyB.set('hit', true);
+        }
 
-                    level.getLayer('score').get('scoreDisplay').addScore(100);
-                });
-            }
+        if (idA == 'character' && idB.startsWith('box')) {
+            level.getLayer('score').get('scoreDisplay').addScore(10);
         }
 
         if (idA == 'character' && idB.startsWith('enemy')) {
