@@ -1132,6 +1132,27 @@ anima.Node = Class.extend({
         }
     },
 
+    animateSpriteSheet:function (startFrame, endFrame, duration, onAnimationEndedFn) {
+
+        if (!startFrame && !endFrame) {
+            startFrame = 0;
+            endFrame = this.getTotalSprites() - 1;
+        }
+        if (!duration) {
+            duration = this.getSpriteSheetDuration();
+        }
+
+        var me = this;
+        var animationId = this._animator.addAnimation({
+            interpolateValuesFn:function (animator, t) {
+                var index = (startFrame + t * (endFrame - startFrame)) / duration;
+                me.setCurrentSprite(index);
+            },
+            duration:duration,
+            onAnimationEndedFn:onAnimationEndedFn
+        });
+    },
+
     getSize:function () {
 
         return this._size;
@@ -3053,6 +3074,15 @@ anima.Level = anima.Scene.extend({
         this._digitGap = config.digitGap;
         this._digitCount = config.digitCount;
 
+        if (config.digitAnimation) {
+            this._digitAnimation = anima.clone(config.digitAnimation);
+        } else {
+            this._digitAnimation = {
+                duration:300,
+                frameCount:1
+            }
+        }
+
         if (!config.posX) {
             this._calculatePosition(level);
         } else {
@@ -3083,13 +3113,25 @@ anima.Level = anima.Scene.extend({
             }
         }
 
-        var digit;
+        var frameCount = this._digitAnimation.frameCount;
+        var duration = this._digitAnimation.duration;
+
+        var digit, digitNode;
         for (i = 0; i < this._digitCount; i++) {
             digit = scoreStr.charAt(i);
+            digitNode = this._digits[i];
             if (digit == ' ') {
-                this._digits[i].setCurrentSprite(11);
+                digitNode.setCurrentSprite(11 * frameCount);
             } else {
-                this._digits[i].setCurrentSprite(parseInt(digit));
+                var startFrame = parseInt(digit) * frameCount;
+                if (frameCount == 1) {
+                    digitNode.setCurrentSprite(startFrame);
+                } else {
+                    //var endFrame = startFrame + frameCount - 1;
+                    //digitNode.animateSpriteSheet(startFrame + 1, endFrame, duration, function () {
+                    digitNode.setCurrentSprite(startFrame);
+                    //}, 'add-score-digits');
+                }
             }
         }
 
