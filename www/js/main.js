@@ -29,7 +29,7 @@ function createLevel0() {
         var idB = bodyB.getId();
 
         if (idA == 'character' && idB == 'platform') {
-            if (!bodyA.get('inRestAnimation')) {
+            if (!bodyA.get('inRestAnimation') && !bodyA.get('inAction')) {
                 bodyA.set('inRestAnimation', true);
                 animateCharacter(bodyA, 'start');
                 //bodyA.get('gazia').play();
