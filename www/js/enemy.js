@@ -57,6 +57,8 @@ function createEnemy(layer, id, posX, posY, animationOffset) {
     fixDef.friction = 0.5;
     fixDef.restitution = 0.4;
     fixDef.shapeFile = 'resources/shapes/enemy.plist';
+    fixDef.filter.categoryBits = CATEGORY_ENEMY;
+    fixDef.filter.maskBits = CATEGORY_USER | CATEGORY_BOX;
 
     body.define(bodyDef, fixDef);
 

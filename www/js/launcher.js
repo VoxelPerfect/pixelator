@@ -4,7 +4,7 @@ function createPlatform(layer) {
     var levelHeight = level.getPhysicalSize().height;
 
     var posX = 0.39 * WORLD_SCALE;
-    var posY = levelHeight - 0.09 * WORLD_SCALE;
+    var posY = levelHeight - 0.12 * WORLD_SCALE;
 
     var body = new anima.Body('platform');
     layer.addNode(body);
@@ -23,6 +23,8 @@ function createPlatform(layer) {
     fixDef.friction = 0.5;
     fixDef.restitution = 0.2;
     fixDef.shape.SetAsBox(physicalSize.width / 2, physicalSize.height / 2);
+    fixDef.filter.categoryBits = CATEGORY_USER_PLATFORM;
+    fixDef.filter.maskBits = CATEGORY_USER;
 
     body.define(bodyDef, fixDef);
 

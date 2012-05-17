@@ -21,6 +21,8 @@ function createObstacleBox(layer, id, type, posX, posY) {
     fixDef.friction = 2;
     fixDef.restitution = 0.2;
     fixDef.shape.SetAsBox(physicalSize.width / 2, physicalSize.height / 2);
+    fixDef.filter.categoryBits = CATEGORY_BOX;
+    fixDef.filter.maskBits = CATEGORY_BOX_PLATFORM | CATEGORY_BOX | CATEGORY_USER;
 
     body.define(bodyDef, fixDef);
 
@@ -76,6 +78,8 @@ function createObstaclePlatform(layer) {
     fixDef.friction = 0.5;
     fixDef.restitution = 0.2;
     fixDef.shape.SetAsBox(physicalSize.width / 2, physicalSize.height / 2);
+    fixDef.filter.categoryBits = CATEGORY_BOX_PLATFORM;
+    fixDef.filter.maskBits = CATEGORY_BOX;
 
     body.define(bodyDef, fixDef);
 

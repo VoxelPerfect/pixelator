@@ -43,3 +43,11 @@ function createDebugBox(layer) {
         opacity:0.5
     })
 }
+
+var CATEGORY_NONE = 0x0000;
+var CATEGORY_USER = 0x0001;
+var CATEGORY_USER_PLATFORM = 0x0002;
+var CATEGORY_ENEMY = 0x0004;
+var CATEGORY_BOX = 0x0008;
+var CATEGORY_BOX_PLATFORM = 0x010;
+var CATEGORY_ALL = 0xffff;

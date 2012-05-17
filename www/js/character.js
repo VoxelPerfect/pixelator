@@ -1,4 +1,3 @@
-
 function resetCharacter(character, characterPosX, characterPosY) {
 
     if (character.get('inAction')) {
@@ -17,10 +16,11 @@ function resetCharacter(character, characterPosX, characterPosY) {
 
 function createCharacter(layer) {
 
-    var characterPosX = 0.38 * WORLD_SCALE;
-    var characterPosY = 0.8 * WORLD_SCALE; //0.6;
-
     var level = layer.getScene();
+    var levelHeight = level.getPhysicalSize().height;
+
+    var characterPosX = 0.38 * WORLD_SCALE;
+    var characterPosY = levelHeight - 0.30 * WORLD_SCALE;
 
     var body = new anima.Body('character');
     layer.addNode(body);
@@ -58,6 +58,8 @@ function createCharacter(layer) {
     fixDef.friction = 0.5;
     fixDef.restitution = 0.2;
     fixDef.shapeFile = 'resources/shapes/character.plist';
+    fixDef.filter.categoryBits = CATEGORY_USER;
+    fixDef.filter.maskBits = CATEGORY_BOX | CATEGORY_USER_PLATFORM | CATEGORY_ENEMY;
 
     body.define(bodyDef, fixDef);
 
