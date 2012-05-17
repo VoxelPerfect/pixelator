@@ -56,14 +56,8 @@ function createEnemy(layer, id, posX, posY, animationOffset) {
     fixDef.density = CHARACTER_DENSITY;
     fixDef.friction = 0.5;
     fixDef.restitution = 0.2;
-    fixDef.svgPoints = [
-        {x:68, y:206.68},
-        {x:68, y:150.68},
-        {x:134, y:166.68},
-        {x:182, y:216.68},
-        {x:165, y:251.68},
-        {x:117, y:243.68}
-    ];
+    fixDef.shapeFile = 'resources/shapes/enemy.plist';
+
     body.define(bodyDef, fixDef);
 
     var animator = body.getAnimator();

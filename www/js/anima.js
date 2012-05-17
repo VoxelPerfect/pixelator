@@ -1,6 +1,6 @@
 var anima = {};
 
-anima.version = '0.9.2 build 3';
+anima.version = '0.9.3 build 2';
 
 anima.isIE = false;
 anima.isIE8 = false;
@@ -75,7 +75,7 @@ anima.debug = anima.getRequestParameter('debug');
 
 anima.log = null;
 anima.logException = null;
-if (anima.isIE && console && (typeof console.log == 'object')) {
+if (anima.isIE) {
     anima.log = function (msg) {
         if (anima.debug) {
             alert(msg);
@@ -236,6 +236,15 @@ anima.parseDate = function (str) {
     } catch (e) {
     }
     return date;
+}
+
+anima.loadXML = function (file, callback) {
+
+    return $.get(file, null, function(data, textStatus, jqXHR) {
+        if (callback) {
+            callback($(data));
+        }
+    }, 'xml');
 }
 
 anima.ext = {};
@@ -2438,7 +2447,13 @@ anima.Canvas = anima.Node.extend({
                 deltaTime += frameTime;
                 frameTime = 0.0;
             }
-            world.Step(deltaTime, this._VELOCITY_ITERATIONS, this._POSITION_ITERATIONS);
+
+            try {
+                world.Step(deltaTime, this._VELOCITY_ITERATIONS, this._POSITION_ITERATIONS);
+            } catch (e) {
+                anima.logException(e);
+            }
+
             stepsPerformed++;
         }
 
@@ -2651,7 +2666,7 @@ anima.Level = anima.Scene.extend({
             debugDraw.SetDrawScale(this._physicsScale);
             debugDraw.SetFillAlpha(0.5);
             debugDraw.SetLineThickness(1.0);
-            debugDraw.SetFlags(b2DebugDraw.e_shapeBit | b2DebugDraw.e_jointBit); // | b2DebugDraw.e_centerOfMassBit);
+            debugDraw.SetFlags(b2DebugDraw.e_shapeBit | b2DebugDraw.e_jointBit | b2DebugDraw.e_centerOfMassBit);
 
             this._world.SetDebugDraw(debugDraw);
         }
@@ -2787,12 +2802,13 @@ anima.Level = anima.Scene.extend({
         this._physicalSize = null;
         this._body = null;
 
-        this._centroidOffset = null;
-
         this._logicFn = null;
 
         this._wasAwake = false;
         this._awakeListenerFn = null;
+
+        this._origin.x = 0.5;
+        this._origin.y = 0.5;
     },
 
     setSize:function (width, height) {
@@ -2816,29 +2832,27 @@ anima.Level = anima.Scene.extend({
             node:this
         });
 
-        if (fixDef.svgPoints) { // from a tracing tool (e.g. Adobe Illustrator)
-            fixDef.shape = this._svgToShape(fixDef.svgPoints);
-
-            fixDef.svgPoints = null;
-            this._body.CreateFixture(fixDef);
-        } else if (fixDef.polyPoints) { // from Physics Editor
-            this._createPolygonShapes(fixDef);
-        } else {
-            this._body.CreateFixture(fixDef);
-        }
-
         var level = this._layer._scene;
         this._position = {
             x:bodyDef.position.x * level._physicsScale,
             y:bodyDef.position.y * level._physicsScale
         }
 
-        this._calculateCentroidOffset();
+        if (fixDef.shapeFile) {
+            var file = fixDef.shapeFile;
+            fixDef.shapeFile = null;
 
-        this._update();
-        this._renderer.updateAll(this);
+            var me = this;
+            anima.loadXML(file, function (data$) {
+                me._createShapes(data$, fixDef);
+                me._onShapeDefined();
+            });
+        } else {
+            this._body.CreateFixture(fixDef);
+            this._onShapeDefined();
+        }
 
-        this.getLevel()._addDynamicBody(this);
+        level._addDynamicBody(this);
     },
 
     getLevel:function () {
@@ -2927,8 +2941,8 @@ anima.Level = anima.Scene.extend({
         var level = this._layer._scene;
 
         var center = this._body.GetWorldCenter();
-        this._position.x = (center.x /* + this._centroidOffset.x */) * level._physicsScale;
-        this._position.y = (center.y /* + this._centroidOffset.y */) * level._physicsScale;
+        this._position.x = center.x * level._physicsScale;
+        this._position.y = center.y * level._physicsScale;
 
         this._angle = -this._body.GetAngle();
 
@@ -2946,121 +2960,51 @@ anima.Level = anima.Scene.extend({
         return awake;
     },
 
-    _createPolygonShapes:function (fixDef) {
+    _pointToVector:function (point, scale) {
+
+        var text = $(point).text();
+        var components = text.split(',');
+        var x = parseFloat(components[0].split('{')[1].trim());
+        var y = parseFloat(components[1].split('}')[0].trim());
+
+        return new b2Vec2(x / scale, -y / scale);
+    },
+
+    _createShapes:function (data$, fixDef) {
 
         var level = this._layer._scene;
+        var scale = level.getPhysicsScale();
 
-        var s, p, polygons, polygonShape;
+        var polygonSets = data$.find('plist > dict :nth-child(4) > dict :nth-child(4) dict > array').children();
 
-        var polygonSets = fixDef.polyPoints;
+        var s, p, points, polygonShape, array;
         for (s = 0; s < polygonSets.length; s++) {
-            polygons = polygonSets[s];
-            for (p = 0; p < polygons.length; p++) {
-                polygonShape = new b2PolygonShape();
-                polygonShape.SetAsArray(polygons[p], polygons[p].length);
-                fixDef.shape = polygonShape;
-
-                this._body.CreateFixture(fixDef);
-            }
-        }
-        fixDef.polyPoints = null;
-    },
-
-    _calculateShapeSize:function (shapePoints) {
-
-        var MAX = 100000.0;
-
-        var x, y;
-        var minX = MAX, maxX = -MAX;
-        var minY = MAX, maxY = -MAX;
-
-        var count = shapePoints.length;
-        for (var i = 0; i < count; i++) {
-            x = shapePoints[i].x;
-            if (x > maxX) {
-                maxX = x;
-            }
-            if (x < minX) {
-                minX = x;
+            array = [];
+            points = $(polygonSets[s]).children();
+            for (p = 0; p < points.length; p++) {
+                array.push(this._pointToVector(points[p], scale));
             }
 
-            y = shapePoints[i].y;
-            if (y > maxY) {
-                maxY = y;
-            }
-            if (y < minY) {
-                minY = y;
-            }
-        }
+            polygonShape = new b2PolygonShape();
+            polygonShape.SetAsArray(array, array.length);
+            fixDef.shape = polygonShape;
 
-        return {
-            width:maxX - minX,
-            height:maxY - minY
+            this._body.CreateFixture(fixDef);
         }
     },
 
-    _calculateShapeScale:function (shapePoints) {
-
-        var level = this._layer._scene;
-
-        var shapeSize = this._calculateShapeSize(shapePoints);
-
-        var requiredShapeSize = {
-            width:this._physicalSize.width * level._physicsScale,
-            height:this._physicalSize.height * level._physicsScale
-        };
-
-        return shapeSize.width / requiredShapeSize.width;
-    },
-
-    _svgToShape:function (shapePoints) {
-
-        var level = this._layer._scene;
-
-        var shapeScale = this._calculateShapeScale(shapePoints);
-
-        var x, y;
-        var i;
-
-        var tempShape = new b2PolygonShape;
-        var vectors = [];
-        var count = shapePoints.length;
-        for (i = 0; i < count; i++) {
-            x = shapePoints[i].x / shapeScale;
-            y = shapePoints[i].y / shapeScale;
-            vectors.push(new b2Vec2(x, y));
-        }
-        tempShape.SetAsArray(vectors, vectors.length);
-        var centroid = tempShape.m_centroid;
-        var vertices = tempShape.m_vertices;
-
-        var shape = new b2PolygonShape;
-        vectors = [];
-        for (i = 0; i < count; i++) {
-            x = (vertices[i].x - centroid.x) / level._physicsScale;
-            y = (vertices[i].y - centroid.y) / level._physicsScale;
-            vectors.push(new b2Vec2(x, y));
-        }
-        shape.SetAsArray(vectors, vectors.length);
-
-        return shape;
-    },
-
-    _calculateCentroidOffset:function () {
+    _onShapeDefined:function () {
 
         var aabb = this._body.GetFixtureList().GetAABB();
-        var centroid = aabb.GetCenter();
-
         var center = this._body.GetWorldCenter();
-        this._centroidOffset = {
-            x:centroid.x - center.x,
-            y:centroid.y - center.y
-        }
 
         this._origin = {
             x:(center.x - aabb.lowerBound.x) / this._physicalSize.width,
             y:(center.y - aabb.lowerBound.y) / this._physicalSize.height
         }
+
+        this._update();
+        this._renderer.updateAll(this);
     },
 
     _removeElement:function () {

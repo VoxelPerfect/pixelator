@@ -1,35 +1,3 @@
-function setCharacterPointsSvg(fixDef) {
-
-    fixDef.svgPoints = [
-        {x:190, y:268.68},
-        {x:74, y:291.68},
-        {x:60, y:155.68},
-        {x:99, y:107.68},
-        {x:145, y:102.68},
-        {x:182, y:142.68}
-    ];
-}
-
-function setCharacterPointsPolys(level, fixDef) {
-
-    var ptm_ratio = level._physicsScale;
-    fixDef.polyPoints = [
-        [
-            [   new b2Vec2(99 / ptm_ratio, 46 / ptm_ratio)  , new b2Vec2(96 / ptm_ratio, 74 / ptm_ratio)  , new b2Vec2(14 / ptm_ratio, 50 / ptm_ratio)  , new b2Vec2(30 / ptm_ratio, 23 / ptm_ratio)  , new b2Vec2(70 / ptm_ratio, 7 / ptm_ratio)  ] ,
-            [   new b2Vec2(142 / ptm_ratio, 136 / ptm_ratio)  , new b2Vec2(101 / ptm_ratio, 125 / ptm_ratio)  , new b2Vec2(40 / ptm_ratio, 95 / ptm_ratio)  , new b2Vec2(112 / ptm_ratio, 102 / ptm_ratio)  , new b2Vec2(133 / ptm_ratio, 106 / ptm_ratio)  ] ,
-            [   new b2Vec2(101 / ptm_ratio, 125 / ptm_ratio)  , new b2Vec2(142 / ptm_ratio, 136 / ptm_ratio)  , new b2Vec2(137 / ptm_ratio, 143 / ptm_ratio)  , new b2Vec2(117 / ptm_ratio, 147 / ptm_ratio)  , new b2Vec2(100 / ptm_ratio, 137 / ptm_ratio)  ] ,
-            [   new b2Vec2(40 / ptm_ratio, 95 / ptm_ratio)  , new b2Vec2(101 / ptm_ratio, 125 / ptm_ratio)  , new b2Vec2(89 / ptm_ratio, 138 / ptm_ratio)  , new b2Vec2(40 / ptm_ratio, 141 / ptm_ratio)  , new b2Vec2(31 / ptm_ratio, 132 / ptm_ratio)  , new b2Vec2(29 / ptm_ratio, 110 / ptm_ratio)  ] ,
-            [   new b2Vec2(112 / ptm_ratio, 102 / ptm_ratio)  , new b2Vec2(40 / ptm_ratio, 95 / ptm_ratio)  , new b2Vec2(23 / ptm_ratio, 83 / ptm_ratio)  , new b2Vec2(14 / ptm_ratio, 63 / ptm_ratio)  , new b2Vec2(14 / ptm_ratio, 50 / ptm_ratio)  , new b2Vec2(96 / ptm_ratio, 74 / ptm_ratio)  , new b2Vec2(111 / ptm_ratio, 89 / ptm_ratio)  ]
-        ],
-        [
-            [   new b2Vec2(99 / ptm_ratio, 46 / ptm_ratio)  , new b2Vec2(96 / ptm_ratio, 74 / ptm_ratio)  , new b2Vec2(14 / ptm_ratio, 50 / ptm_ratio)  , new b2Vec2(30 / ptm_ratio, 23 / ptm_ratio)  , new b2Vec2(70 / ptm_ratio, 7 / ptm_ratio)  ] ,
-            [   new b2Vec2(142 / ptm_ratio, 136 / ptm_ratio)  , new b2Vec2(101 / ptm_ratio, 125 / ptm_ratio)  , new b2Vec2(40 / ptm_ratio, 95 / ptm_ratio)  , new b2Vec2(112 / ptm_ratio, 102 / ptm_ratio)  , new b2Vec2(133 / ptm_ratio, 106 / ptm_ratio)  ] ,
-            [   new b2Vec2(101 / ptm_ratio, 125 / ptm_ratio)  , new b2Vec2(142 / ptm_ratio, 136 / ptm_ratio)  , new b2Vec2(137 / ptm_ratio, 143 / ptm_ratio)  , new b2Vec2(117 / ptm_ratio, 147 / ptm_ratio)  , new b2Vec2(100 / ptm_ratio, 137 / ptm_ratio)  ] ,
-            [   new b2Vec2(40 / ptm_ratio, 95 / ptm_ratio)  , new b2Vec2(101 / ptm_ratio, 125 / ptm_ratio)  , new b2Vec2(89 / ptm_ratio, 138 / ptm_ratio)  , new b2Vec2(40 / ptm_ratio, 141 / ptm_ratio)  , new b2Vec2(31 / ptm_ratio, 132 / ptm_ratio)  , new b2Vec2(29 / ptm_ratio, 110 / ptm_ratio)  ] ,
-            [   new b2Vec2(112 / ptm_ratio, 102 / ptm_ratio)  , new b2Vec2(40 / ptm_ratio, 95 / ptm_ratio)  , new b2Vec2(23 / ptm_ratio, 83 / ptm_ratio)  , new b2Vec2(14 / ptm_ratio, 63 / ptm_ratio)  , new b2Vec2(14 / ptm_ratio, 50 / ptm_ratio)  , new b2Vec2(96 / ptm_ratio, 74 / ptm_ratio)  , new b2Vec2(111 / ptm_ratio, 89 / ptm_ratio)  ]
-        ]
-    ];
-}
 
 function resetCharacter(character, characterPosX, characterPosY) {
 
@@ -50,7 +18,7 @@ function resetCharacter(character, characterPosX, characterPosY) {
 function createCharacter(layer) {
 
     var characterPosX = 0.38 * WORLD_SCALE;
-    var characterPosY = 0.7 * WORLD_SCALE; //0.6;
+    var characterPosY = 0.5 * WORLD_SCALE; //0.6;
 
     var level = layer.getScene();
 
@@ -89,20 +57,18 @@ function createCharacter(layer) {
     fixDef.density = CHARACTER_DENSITY;
     fixDef.friction = 0.5;
     fixDef.restitution = 0.2;
-    //setCharacterPointsPolys(level, fixDef);
-    setCharacterPointsSvg(fixDef);
+    fixDef.shapeFile = 'resources/shapes/character.plist';
 
     body.define(bodyDef, fixDef);
-
-    var physicalBody = body.getPhysicalBody();
 
     body.setAwakeListener(function (body, awake) {
 
         if (!awake) {
+            var physicalBody = body.getPhysicalBody();
             var center = physicalBody.GetWorldCenter();
             body.getAnimator().addTask(function () {
                 if (body.get('inAction')
-                    && !body.getPhysicalBody().IsAwake()) {
+                    && !physicalBody.IsAwake()) {
 
                     resetCharacter(body, characterPosX, characterPosY);
                     resetArrow(level);
@@ -113,6 +79,7 @@ function createCharacter(layer) {
 
     body.setLogic(function (body) {
 
+        var physicalBody = body.getPhysicalBody();
         if (physicalBody.IsAwake()) {
             var center = physicalBody.GetWorldCenter();
             if (center.y < (0 - body.getPhysicalSize().height * 2)
