@@ -2845,11 +2845,16 @@ anima.Level = anima.Scene.extend({
             var me = this;
             anima.loadXML(file, function (data$) {
                 me._createShapes(data$, fixDef);
-                me._onShapeDefined();
+
+                me._update();
+                me._renderer.updateAll(me);
+
             });
         } else {
             this._body.CreateFixture(fixDef);
-            this._onShapeDefined();
+
+            this._update();
+            this._renderer.updateAll(this);
         }
 
         level._addDynamicBody(this);
@@ -2940,7 +2945,7 @@ anima.Level = anima.Scene.extend({
 
         var level = this._layer._scene;
 
-        var center = this._body.GetWorldCenter();
+        var center = this._body.GetPosition();
         this._position.x = center.x * level._physicsScale;
         this._position.y = center.y * level._physicsScale;
 
@@ -2991,20 +2996,6 @@ anima.Level = anima.Scene.extend({
 
             this._body.CreateFixture(fixDef);
         }
-    },
-
-    _onShapeDefined:function () {
-
-        var aabb = this._body.GetFixtureList().GetAABB();
-        var center = this._body.GetWorldCenter();
-
-        this._origin = {
-            x:(center.x - aabb.lowerBound.x) / this._physicalSize.width,
-            y:(center.y - aabb.lowerBound.y) / this._physicalSize.height
-        }
-
-        this._update();
-        this._renderer.updateAll(this);
     },
 
     _removeElement:function () {

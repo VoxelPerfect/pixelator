@@ -1,3 +1,52 @@
+function onEnemyHit(enemy) {
+
+    var animator = enemy.getAnimator();
+    if (enemy.get('hits')) {
+        if (enemy.get('hits') == 1) {
+            enemy.set('hits', 2);
+
+            //bodyB.get('boom').play();
+
+            var pouf = enemy.getLayer().getNode('pouf_' + enemy.getId());
+            pouf.show();
+            animator.endAnimation(enemy.get('pulseId'));
+            animator.endAnimation(enemy.get('moveId'));
+            enemy.fadeOut(1000);
+
+            animator.addAnimation({
+                interpolateValuesFn:function (animator, t) {
+                    var characterSprites = pouf.getTotalSprites();
+                    var index = t * (characterSprites - 1) / 1000;
+                    pouf.setCurrentSprite(index);
+                },
+                duration:1000,
+                onAnimationEndedFn:function (animation) {
+                    pouf.hide();
+                    var physicalBody = enemy.getPhysicalBody();
+                    physicalBody.SetActive(false);
+                    level.getWorld().DestroyBody(physicalBody);
+                }});
+
+            level.getLayer('score').get('scoreDisplay').addScore(350);
+        }
+    } else {
+        enemy.set('hits', 1);
+
+        //bodyB.get('boom').play();
+
+        var pulseAnimationId = animator.addAnimation({
+            interpolateValuesFn:function (animator, t) {
+                var value = animator.interpolate(0.0, 1.0, t);
+                var opacity = (value < 0.5) ? 1.0 - 2 * value : 2 * value - 1;
+                enemy.getElement().css('opacity', opacity);
+            },
+            duration:1000,
+            easing:anima.Easing.easeInOutSine,
+            loop:true});
+        enemy.set('pulseId', pulseAnimationId);
+    }
+}
+
 function createLevel0() {
 
     var level = new anima.Level('level0', 2.0 * WORLD_SCALE, new b2Vec2(0, GRAVITY)); // 2m wide, gravity = 9.81 m/sec2
@@ -46,55 +95,16 @@ function createLevel0() {
 
         if (idA == 'character' && idB.startsWith('box')) {
             level.getLayer('score').get('scoreDisplay').addScore(10);
+        } else if (idB == 'character' && idA.startsWith('box')) {
+            level.getLayer('score').get('scoreDisplay').addScore(10);
         }
 
         if (idA == 'character' && idB.startsWith('enemy')) {
-            var animator = bodyB.getAnimator();
-            if (bodyB.get('hits')) {
-                if (bodyB.get('hits') == 1) {
-                    bodyB.set('hits', 2);
-
-                    //bodyB.get('boom').play();
-
-                    var pouf = bodyB.getLayer().getNode('pouf_' + bodyB.getId());
-                    pouf.show();
-                    animator.endAnimation(bodyB.get('pulseId'));
-                    animator.endAnimation(bodyB.get('moveId'));
-                    bodyB.fadeOut(1000);
-
-                    animator.addAnimation({
-                        interpolateValuesFn:function (animator, t) {
-                            var characterSprites = pouf.getTotalSprites();
-                            var index = t * (characterSprites - 1) / 1000;
-                            pouf.setCurrentSprite(index);
-                        },
-                        duration:1000,
-                        onAnimationEndedFn:function (animation) {
-                            pouf.hide();
-                            var physicalBody = bodyB.getPhysicalBody();
-                            physicalBody.SetActive(false);
-                            level.getWorld().DestroyBody(physicalBody);
-                        }});
-
-                    level.getLayer('score').get('scoreDisplay').addScore(350);
-                }
-            } else {
-                bodyB.set('hits', 1);
-
-                //bodyB.get('boom').play();
-
-                var pulseAnimationId = animator.addAnimation({
-                    interpolateValuesFn:function (animator, t) {
-                        var value = animator.interpolate(0.0, 1.0, t);
-                        var opacity = (value < 0.5) ? 1.0 - 2 * value : 2 * value - 1;
-                        bodyB.getElement().css('opacity', opacity);
-                    },
-                    duration:1000,
-                    easing:anima.Easing.easeInOutSine,
-                    loop:true});
-                bodyB.set('pulseId', pulseAnimationId);
-            }
+            onEnemyHit(bodyB);
+        } else if (idB == 'character' && idA.startsWith('enemy')) {
+            onEnemyHit(bodyA);
         }
+
     });
 
     var scoreDisplay = new anima.ext.ScoreDisplay(level, {

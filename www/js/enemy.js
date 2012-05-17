@@ -55,7 +55,7 @@ function createEnemy(layer, id, posX, posY, animationOffset) {
     var fixDef = new b2FixtureDef;
     fixDef.density = CHARACTER_DENSITY;
     fixDef.friction = 0.5;
-    fixDef.restitution = 0.2;
+    fixDef.restitution = 0.4;
     fixDef.shapeFile = 'resources/shapes/enemy.plist';
 
     body.define(bodyDef, fixDef);

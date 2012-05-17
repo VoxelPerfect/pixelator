@@ -17,7 +17,7 @@ function createObstacleBox(layer, id, type, posX, posY) {
 
     var fixDef = new b2FixtureDef;
     fixDef.shape = new b2PolygonShape;
-    fixDef.density = 8.0;
+    fixDef.density = 1.5;
     fixDef.friction = 2;
     fixDef.restitution = 0.2;
     fixDef.shape.SetAsBox(physicalSize.width / 2, physicalSize.height / 2);
@@ -37,7 +37,7 @@ function createObstacleBox(layer, id, type, posX, posY) {
 
         var physicalBody = body.getPhysicalBody();
         if (physicalBody.IsAwake()) {
-            var center = physicalBody.GetWorldCenter();
+            var center = physicalBody.GetPosition();
             if (center.y < (0 - body.getPhysicalSize().height * 2)
                 || center.y > level.getPhysicalSize().height
                 || center.x < 0) {

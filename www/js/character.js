@@ -18,7 +18,7 @@ function resetCharacter(character, characterPosX, characterPosY) {
 function createCharacter(layer) {
 
     var characterPosX = 0.38 * WORLD_SCALE;
-    var characterPosY = 0.5 * WORLD_SCALE; //0.6;
+    var characterPosY = 0.8 * WORLD_SCALE; //0.6;
 
     var level = layer.getScene();
 
@@ -65,7 +65,6 @@ function createCharacter(layer) {
 
         if (!awake) {
             var physicalBody = body.getPhysicalBody();
-            var center = physicalBody.GetWorldCenter();
             body.getAnimator().addTask(function () {
                 if (body.get('inAction')
                     && !physicalBody.IsAwake()) {
@@ -81,7 +80,7 @@ function createCharacter(layer) {
 
         var physicalBody = body.getPhysicalBody();
         if (physicalBody.IsAwake()) {
-            var center = physicalBody.GetWorldCenter();
+            var center = physicalBody.GetPosition();
             if (center.y < (0 - body.getPhysicalSize().height * 2)
                 || center.y > level.getPhysicalSize().height
                 || center.x < 0) {
