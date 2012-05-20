@@ -1,6 +1,6 @@
 var anima = {};
 
-anima.version = '0.9.4 build 1';
+anima.version = '0.9.4 build 2';
 
 anima.isIE = false;
 anima.isIE8 = false;
@@ -39,8 +39,8 @@ if ($.support.cssTransitions) {
 
 anima.isWebkit = ($.browser.webkit || $.browser.safari);
 
-anima.frameRate = 30; // fps
-anima.physicsFrameRate = 2 * anima.frameRate;
+anima.frameRate = 60; // fps
+anima.physicsFrameRate = anima.frameRate;
 
 if (!window.requestAnimationFrame) {
     window.requestAnimationFrame = (function () {
@@ -340,27 +340,46 @@ var b2Vec2 = Box2D.Common.Math.b2Vec2,
 
 /* Performance Statistics */
 
+// TODO add one stats object per section (e.g. physics step/update, logic, animator, etc)
+// width is 80px so set left accordingly for each one (horizontal alignment... or maybe vertical is better?)
+
 anima.stats = null;
-anima.initializeStats = function () {
+
+anima._createStatsMonitor = function (name, mode, y) {
+
+    var monitor = null;
     if (Stats) {
-        anima.stats = new Stats();
-        anima.stats.setMode(0); // 0: fps, 1: ms
+        monitor = new Stats(name);
+        monitor.setMode(mode); // 0: fps, 1: ms
 
-        // Align top-left
-        anima.stats.domElement.style.position = 'absolute';
-        anima.stats.domElement.style.left = '0px';
-        anima.stats.domElement.style.top = '0px';
+        monitor.domElement.style.position = 'absolute';
+        monitor.domElement.style.left = '0px';
+        monitor.domElement.style.top = y + 'px';
 
-        document.body.appendChild(anima.stats.domElement);
+        document.body.appendChild(monitor.domElement);
     } else {
-        anima.stats = {
-            domElement:null,
+        monitor = {
             begin:function () {
             },
             end:function () {
             }
         }
     }
+
+    return monitor;
+}
+
+anima.initializeStats = function () {
+
+    var yStep = 45;
+
+    anima.stats = {
+        total:anima._createStatsMonitor(null, 0, 0),
+        physics:anima._createStatsMonitor('P', 1, 1 * yStep),
+        logic:anima._createStatsMonitor('L', 1, 2 * yStep),
+        update:anima._createStatsMonitor('U', 1, 3 * yStep),
+        animate:anima._createStatsMonitor('A', 1, 4 * yStep)
+    };
 }
 anima.Sound = Class.extend({
 
@@ -793,10 +812,14 @@ anima.RendererCSS3 = Class.extend({
             transformation += ' translateZ(0)';
         }
 
-        node._element$.css(anima.cssVendorPrefix + 'transform', transformation);
+        if (node._lastTransformation != transformation) {
+            node._lastTransformation = transformation;
 
-        if (node._resizeHandler && node.isVisible()) {
-            node._resizeHandler(node);
+            node._element$.css(anima.cssVendorPrefix + 'transform', transformation);
+
+            if (node._resizeHandler && node.isVisible()) {
+                node._resizeHandler(node);
+            }
         }
     },
 
@@ -2463,6 +2486,7 @@ anima.Canvas = anima.Node.extend({
 
         var world = level._world;
 
+        /**/ anima.stats.physics.begin();
         if (anima.physicsFrameRate != anima.frameRate) {
             var frameTime = 1.0 / anima.frameRate;
             var stepsPerformed = 0;
@@ -2489,12 +2513,15 @@ anima.Canvas = anima.Node.extend({
                 anima.logException(e);
             }
         }
+        /**/ anima.stats.physics.end();
 
+        /**/ anima.stats.logic.begin();
         try {
             level._logic();
         } catch (e) {
             anima.logException(e);
         }
+        /**/ anima.stats.logic.end();
 
         if (this._debug) {
             level._world.DrawDebugData(true);
@@ -2505,7 +2532,7 @@ anima.Canvas = anima.Node.extend({
     _update:function () {
 
         try {
-            anima.stats.begin();
+            /**/ anima.stats.total.begin();
 
             var scene = this._currentScene;
             if (scene && scene._world) {
@@ -2515,17 +2542,23 @@ anima.Canvas = anima.Node.extend({
                 }
 
                 if (!sleeping) {
+                    /**/ anima.stats.update.begin();
                     scene._update();
+                    /**/ anima.stats.update.end();
                 }
 
+                /**/ anima.stats.animate.begin();
                 this._animator.animate();
-                anima.stats.end();
+                /**/ anima.stats.animate.end();
+                /**/ anima.stats.total.end();
 
                 return;
             }
 
+            /**/ anima.stats.animate.begin();
             this._animator.animate();
-            anima.stats.end();
+            /**/ anima.stats.animate.end();
+            /**/ anima.stats.total.end();
         } catch (e) {
             anima.logException(e);
         }
@@ -2646,11 +2679,11 @@ $(window).bind('orientationchange', function (event, orientation) {
 
 function _anima_update() {
 
+    window.requestAnimationFrame(_anima_update, '_anima_update()');
+
     $.each(anima._canvases, function (index, value) {
         value._update();
     });
-
-    window.requestAnimationFrame(_anima_update, '_anima_update()');
 }
 
 anima.start = function (callbackFn) {
