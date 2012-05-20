@@ -2975,6 +2975,13 @@ anima.Level = anima.Scene.extend({
         return new b2Vec2(x / scale, -y / scale);
     },
 
+    _toClockwise:function (points) {
+
+        points.reverse();
+        var last = points.pop();
+        points.unshift(last);
+    },
+
     _createShapes:function (data$, fixDef) {
 
         var level = this._layer._scene;
@@ -2989,6 +2996,7 @@ anima.Level = anima.Scene.extend({
             for (p = 0; p < points.length; p++) {
                 array.push(this._pointToVector(points[p], scale));
             }
+            this._toClockwise(array);
 
             polygonShape = new b2PolygonShape();
             polygonShape.SetAsArray(array, array.length);

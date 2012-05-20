@@ -43,20 +43,22 @@ function createEnemy(layer, id, posX, posY, animationOffset) {
         totalSprites:50
     });
     var physicalSize = body.getPhysicalSize();
-    var physicalSize = body.getPhysicalSize();
 
     var bodyDef = new b2BodyDef;
     bodyDef.type = b2Body.b2_staticBody;
     bodyDef.allowSleep = true;
+    //bodyDef.linearDamping = 2000.0;
     bodyDef.position.x = posX;
     bodyDef.position.y = posY;
-    bodyDef.fixedRotation = false;
+    //bodyDef.fixedRotation = false;
 
     var fixDef = new b2FixtureDef;
     fixDef.density = CHARACTER_DENSITY;
     fixDef.friction = 0.5;
     fixDef.restitution = 0.4;
     fixDef.shapeFile = 'resources/shapes/enemy.plist';
+    //fixDef.shape = new b2PolygonShape();
+    //fixDef.shape.SetAsBox(physicalSize.width / 2, physicalSize.height / 2);
     fixDef.filter.categoryBits = CATEGORY_ENEMY;
     fixDef.filter.maskBits = CATEGORY_USER | CATEGORY_BOX;
 

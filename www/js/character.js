@@ -51,7 +51,6 @@ function createCharacter(layer) {
     bodyDef.linearDamping = LINEAR_DAMPING;
     bodyDef.position.x = characterPosX;
     bodyDef.position.y = characterPosY;
-    //bodyDef.fixedRotation = false;
 
     var fixDef = new b2FixtureDef;
     fixDef.density = CHARACTER_DENSITY;

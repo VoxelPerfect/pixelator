@@ -1,4 +1,4 @@
-function onEnemyHit(enemy) {
+function onEnemyHit(level, enemy) {
 
     var animator = enemy.getAnimator();
     if (enemy.get('hits')) {
@@ -100,9 +100,9 @@ function createLevel0() {
         }
 
         if (idA == 'character' && idB.startsWith('enemy')) {
-            onEnemyHit(bodyB);
+            onEnemyHit(level, bodyB);
         } else if (idB == 'character' && idA.startsWith('enemy')) {
-            onEnemyHit(bodyA);
+            onEnemyHit(level, bodyA);
         }
 
     });

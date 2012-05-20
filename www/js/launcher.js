@@ -19,9 +19,9 @@ function createPlatform(layer) {
     bodyDef.position.y = posY;
 
     var fixDef = new b2FixtureDef;
-    fixDef.shape = new b2PolygonShape;
     fixDef.friction = 0.5;
     fixDef.restitution = 0.2;
+    fixDef.shape = new b2PolygonShape;
     fixDef.shape.SetAsBox(physicalSize.width / 2, physicalSize.height / 2);
     fixDef.filter.categoryBits = CATEGORY_USER_PLATFORM;
     fixDef.filter.maskBits = CATEGORY_USER;
@@ -29,7 +29,7 @@ function createPlatform(layer) {
     body.define(bodyDef, fixDef);
 
     var physicalBody = body.getPhysicalBody();
-    physicalBody.SetAngle(anima.toRadians(-10));
+    physicalBody.SetAngle(anima.toRadians(-14));
 }
 
 function createArrow(layer) {

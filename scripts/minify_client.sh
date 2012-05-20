@@ -17,6 +17,7 @@ echo "    compressed javascript files"
 mkdir ../deploy/resources
 cp -R ../www/resources/css ../deploy/resources
 cp -R ../www/resources/images ../deploy/resources
+cp -R ../www/resources/shapes ../deploy/resources
 cp -R ../www/resources/jqmobile ../deploy/resources
 cp -R ../www/resources/sounds ../deploy/resources
 cp -R ../www/resources/swf ../deploy/resources

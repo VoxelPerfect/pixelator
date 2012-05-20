@@ -17,8 +17,8 @@ function createObstacleBox(layer, id, type, posX, posY) {
 
     var fixDef = new b2FixtureDef;
     fixDef.shape = new b2PolygonShape;
-    fixDef.density = 1.5;
-    fixDef.friction = 2;
+    fixDef.density = 1.0;
+    fixDef.friction = 0.9;
     fixDef.restitution = 0.2;
     fixDef.shape.SetAsBox(physicalSize.width / 2, physicalSize.height / 2);
     fixDef.filter.categoryBits = CATEGORY_BOX;

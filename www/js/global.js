@@ -4,9 +4,9 @@ var canvas = null;
 var DEBUG = anima.getRequestParameter('debug');
 var WORLD_SCALE = parseFloat(anima.getRequestParameter('scale', '18.0'));
 var CHARACTER_DENSITY = parseFloat(anima.getRequestParameter('density', '1.0'));
-var CHARACTER_IMPULSE = parseFloat(anima.getRequestParameter('impulse', '30.0'));
+var CHARACTER_IMPULSE = parseFloat(anima.getRequestParameter('impulse', '200.0'));
 var GRAVITY = parseFloat(anima.getRequestParameter('gravity', '9.81'));
-var LINEAR_DAMPING = parseFloat(anima.getRequestParameter('damp', '0.4'));
+var LINEAR_DAMPING = parseFloat(anima.getRequestParameter('damp', '0.3'));
 
 function getImageUrl(level, imageName, extension) {
 
