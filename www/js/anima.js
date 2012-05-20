@@ -1,6 +1,6 @@
 var anima = {};
 
-anima.version = '0.9.3 build 2';
+anima.version = '0.9.4 build 1';
 
 anima.isIE = false;
 anima.isIE8 = false;
@@ -240,7 +240,7 @@ anima.parseDate = function (str) {
 
 anima.loadXML = function (file, callback) {
 
-    return $.get(file, null, function(data, textStatus, jqXHR) {
+    return $.get(file, null, function (data, textStatus, jqXHR) {
         if (callback) {
             callback($(data));
         }
@@ -337,6 +337,31 @@ var b2Vec2 = Box2D.Common.Math.b2Vec2,
         return Class;
     };
 })();
+
+/* Performance Statistics */
+
+anima.stats = null;
+anima.initializeStats = function () {
+    if (Stats) {
+        anima.stats = new Stats();
+        anima.stats.setMode(0); // 0: fps, 1: ms
+
+        // Align top-left
+        anima.stats.domElement.style.position = 'absolute';
+        anima.stats.domElement.style.left = '0px';
+        anima.stats.domElement.style.top = '0px';
+
+        document.body.appendChild(anima.stats.domElement);
+    } else {
+        anima.stats = {
+            domElement:null,
+            begin:function () {
+            },
+            end:function () {
+            }
+        }
+    }
+}
 anima.Sound = Class.extend({
 
     init:function (id, url, loop) {
@@ -2438,23 +2463,31 @@ anima.Canvas = anima.Node.extend({
 
         var world = level._world;
 
-        var frameTime = 1.0 / anima.frameRate;
-        var stepsPerformed = 0;
-        while ((frameTime > 0.0) && (stepsPerformed < this._MAXIMUM_NUMBER_OF_STEPS)) {
-            var deltaTime = Math.min(frameTime, this._FIXED_TIMESTEP);
-            frameTime -= deltaTime;
-            if (frameTime < this._MINIMUM_TIMESTEP) {
-                deltaTime += frameTime;
-                frameTime = 0.0;
-            }
+        if (anima.physicsFrameRate != anima.frameRate) {
+            var frameTime = 1.0 / anima.frameRate;
+            var stepsPerformed = 0;
+            while ((frameTime > 0.0) && (stepsPerformed < this._MAXIMUM_NUMBER_OF_STEPS)) {
+                var deltaTime = Math.min(frameTime, this._FIXED_TIMESTEP);
+                frameTime -= deltaTime;
+                if (frameTime < this._MINIMUM_TIMESTEP) {
+                    deltaTime += frameTime;
+                    frameTime = 0.0;
+                }
 
+                try {
+                    world.Step(deltaTime, this._VELOCITY_ITERATIONS, this._POSITION_ITERATIONS);
+                } catch (e) {
+                    anima.logException(e);
+                }
+
+                stepsPerformed++;
+            }
+        } else {
             try {
-                world.Step(deltaTime, this._VELOCITY_ITERATIONS, this._POSITION_ITERATIONS);
+                world.Step(1.0 / anima.frameRate, this._VELOCITY_ITERATIONS, this._POSITION_ITERATIONS);
             } catch (e) {
                 anima.logException(e);
             }
-
-            stepsPerformed++;
         }
 
         try {
@@ -2472,6 +2505,8 @@ anima.Canvas = anima.Node.extend({
     _update:function () {
 
         try {
+            anima.stats.begin();
+
             var scene = this._currentScene;
             if (scene && scene._world) {
                 var sleeping = !scene.isAwake();
@@ -2484,11 +2519,13 @@ anima.Canvas = anima.Node.extend({
                 }
 
                 this._animator.animate();
+                anima.stats.end();
 
                 return;
             }
 
             this._animator.animate();
+            anima.stats.end();
         } catch (e) {
             anima.logException(e);
         }
@@ -2619,6 +2656,8 @@ function _anima_update() {
 anima.start = function (callbackFn) {
 
     $.mobile.loadingMessageTextVisible = false;
+
+    anima.initializeStats();
 
     anima._initializeSound(function () {
         anima.onResize();
