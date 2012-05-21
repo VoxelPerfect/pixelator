@@ -3,6 +3,22 @@ function createObstacleBox(layer, id, type, posX, posY) {
     var level = layer.getScene();
 
     var body = new anima.Body('box-' + type + '-' + id);
+    body.logic = function () {
+
+        var body = this;
+
+        var physicalBody = body.getPhysicalBody();
+        if (physicalBody.IsAwake()) {
+            var center = physicalBody.GetPosition();
+            if (center.y > level.getPhysicalSize().height
+                || center.x < 0) {
+
+                body.hide();
+                physicalBody.SetActive(false);
+            }
+        }
+    };
+
     layer.addNode(body);
 
     body.setSize(68, 60);
@@ -32,21 +48,6 @@ function createObstacleBox(layer, id, type, posX, posY) {
             body.fadeOut(400, function () {
                 body.getPhysicalBody().SetActive(false);
             });
-        }
-    });
-
-    body.setLogic(function (body) {
-
-        var physicalBody = body.getPhysicalBody();
-        if (physicalBody.IsAwake()) {
-            var center = physicalBody.GetPosition();
-            if (center.y < (0 - body.getPhysicalSize().height * 2)
-                || center.y > level.getPhysicalSize().height
-                || center.x < 0) {
-
-                body.hide();
-                physicalBody.SetActive(false);
-            }
         }
     });
 

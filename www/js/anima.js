@@ -514,6 +514,7 @@ anima.RendererCSS3 = Class.extend({
         var parent$ = $('#pageContent');
         parent$.append('<div id="' + canvas._id + '"></div>');
         canvas._element$ = $('#' + canvas._id);
+        canvas._domElement = canvas._element$.get(0);
 
         canvas._element$.css({
             'padding':'0px',
@@ -632,6 +633,7 @@ anima.RendererCSS3 = Class.extend({
         }
 
         node._element$ = $('#' + elementId);
+        node._domElement = node._element$.get(0);
 
         node._element$.css({
             'position':'absolute'
@@ -811,7 +813,11 @@ anima.RendererCSS3 = Class.extend({
         if (node._lastTransformation != transformation) {
             node._lastTransformation = transformation;
 
-            node._element$.css(anima.cssVendorPrefix + 'transform', transformation);
+            if (anima.isWebkit) {
+                node._domElement.style[anima.cssVendorPrefix + 'transform'] = transformation;
+            } else {
+                node._element$.css(anima.cssVendorPrefix + 'transform', transformation);
+            }
 
             if (node._resizeHandler && node.isVisible()) {
                 node._resizeHandler(node);
@@ -2777,7 +2783,7 @@ anima.Level = anima.Scene.extend({
 
     _addNodeWithLogic:function (node) {
 
-        if (node._logicFn || node.logic) {
+        if (node.logic) {
             this._nodesWithLogic[this._renderer.getElementId(node)] = node;
         }
     },
@@ -2795,8 +2801,6 @@ anima.Level = anima.Scene.extend({
             node._checkAwake();
             if (node.logic) {
                 node.logic();
-            } else {
-                node._logicFn(node);
             }
         }
     },
@@ -2870,8 +2874,6 @@ anima.Level = anima.Scene.extend({
         this._physicalSize = null;
         this._body = null;
 
-        this._logicFn = null;
-
         this._wasAwake = false;
         this._awakeListenerFn = null;
 
@@ -2931,21 +2933,6 @@ anima.Level = anima.Scene.extend({
     getLevel:function () {
 
         return this._layer._scene;
-    },
-
-    setLogic:function (logicFn) {
-
-        this._logicFn = logicFn;
-        if (logicFn) {
-            this.getLevel()._addNodeWithLogic(this);
-        } else {
-            this.getLevel()._removeNodeWithLogic(this);
-        }
-    },
-
-    getLogic:function () {
-
-        return this._logicFn;
     },
 
     getPhysicalBody:function () {

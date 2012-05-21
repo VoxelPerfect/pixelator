@@ -23,6 +23,29 @@ function createCharacter(layer) {
     var characterPosY = levelHeight - 0.30 * WORLD_SCALE;
 
     var body = new anima.Body('character');
+    body.logic = function () {
+
+        var body = this;
+
+        var physicalBody = body.getPhysicalBody();
+        if (physicalBody.IsAwake()) {
+            var center = physicalBody.GetPosition();
+            if (center.y < (0 - body.getPhysicalSize().height * 2)
+                || center.y > level.getPhysicalSize().height
+                || center.x < 0) {
+
+                resetCharacter(body, characterPosX, characterPosY);
+                resetArrow(level);
+            }
+        }
+
+        if (body.get('inAction')
+            && (!physicalBody.IsAwake() || physicalBody.GetLinearVelocity().Length() < 0.01)) {
+
+            resetCharacter(body, characterPosX, characterPosY);
+            resetArrow(level);
+        }
+    };
     layer.addNode(body);
 
     body.setSize(150, 190);
@@ -74,21 +97,6 @@ function createCharacter(layer) {
                     resetArrow(level);
                 }
             }, 2000);
-        }
-    });
-
-    body.setLogic(function (body) {
-
-        var physicalBody = body.getPhysicalBody();
-        if (physicalBody.IsAwake()) {
-            var center = physicalBody.GetPosition();
-            if (center.y < (0 - body.getPhysicalSize().height * 2)
-                || center.y > level.getPhysicalSize().height
-                || center.x < 0) {
-
-                resetCharacter(body, characterPosX, characterPosY);
-                resetArrow(level);
-            }
         }
     });
 
