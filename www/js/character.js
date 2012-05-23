@@ -20,7 +20,7 @@ function createCharacter(layer) {
     var levelHeight = level.getPhysicalSize().height;
 
     var characterPosX = 0.38 * WORLD_SCALE;
-    var characterPosY = levelHeight - 0.30 * WORLD_SCALE;
+    var characterPosY = levelHeight - 0.25 * WORLD_SCALE;
 
     var body = new anima.Body('character');
     body.logic = function () {
@@ -40,7 +40,7 @@ function createCharacter(layer) {
         }
 
         if (body.get('inAction')
-            && (!physicalBody.IsAwake() || physicalBody.GetLinearVelocity().Length() < 0.01)) {
+            && (!physicalBody.IsAwake() || !body.isMoving())) {
 
             resetCharacter(body, characterPosX, characterPosY);
             resetArrow(level);
@@ -91,7 +91,7 @@ function createCharacter(layer) {
             var physicalBody = body.getPhysicalBody();
             body.getAnimator().addTask(function () {
                 if (body.get('inAction')
-                    && !physicalBody.IsAwake()) {
+                    && (!physicalBody.IsAwake() || !body.isMoving())) {
 
                     resetCharacter(body, characterPosX, characterPosY);
                     resetArrow(level);

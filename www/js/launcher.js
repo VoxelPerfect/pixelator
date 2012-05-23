@@ -29,7 +29,7 @@ function createPlatform(layer) {
     body.define(bodyDef, fixDef);
 
     var physicalBody = body.getPhysicalBody();
-    physicalBody.SetAngle(anima.toRadians(-14));
+    physicalBody.SetAngle(anima.toRadians(-9));
 }
 
 function createArrow(layer) {

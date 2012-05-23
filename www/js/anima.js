@@ -1,6 +1,6 @@
 var anima = {};
 
-anima.version = '0.9.4 build 2';
+anima.version = '0.9.4 build 3';
 
 anima.isIE = false;
 anima.isIE8 = false;
@@ -340,10 +340,16 @@ var b2Vec2 = Box2D.Common.Math.b2Vec2,
 
 /* Performance Statistics */
 
-// TODO add one stats object per section (e.g. physics step/update, logic, animator, etc)
-// width is 80px so set left accordingly for each one (horizontal alignment... or maybe vertical is better?)
+anima._statsLevel = anima.getRequestParameter('stats', 'none');
 
-anima.stats = null;
+anima.stats = {};
+
+anima.stats._nopMonitor = {
+    begin:function () {
+    },
+    end:function () {
+    }
+};
 
 anima._createStatsMonitor = function (name, mode, y) {
 
@@ -358,12 +364,7 @@ anima._createStatsMonitor = function (name, mode, y) {
 
         document.body.appendChild(monitor.domElement);
     } else {
-        monitor = {
-            begin:function () {
-            },
-            end:function () {
-            }
-        }
+        monitor = anima.stats._nopMonitor;
     }
 
     return monitor;
@@ -373,13 +374,14 @@ anima.initializeStats = function () {
 
     var yStep = 45;
 
-    anima.stats = {
-        total:anima._createStatsMonitor(null, 0, 0),
-        physics:anima._createStatsMonitor('P', 1, 1 * yStep),
-        logic:anima._createStatsMonitor('L', 1, 2 * yStep),
-        update:anima._createStatsMonitor('U', 1, 3 * yStep),
-        animate:anima._createStatsMonitor('A', 1, 4 * yStep)
-    };
+    var level = anima._statsLevel;
+
+
+    anima.stats.total = (level == 'all' || level == 'fps') ? anima._createStatsMonitor(null, 0, 0) : anima.stats._nopMonitor;
+    anima.stats.physics = (level == 'all') ? anima._createStatsMonitor('P', 1, 1 * yStep) : anima.stats._nopMonitor;
+    anima.stats.logic = (level == 'all') ? anima._createStatsMonitor('L', 1, 2 * yStep) : anima.stats._nopMonitor;
+    anima.stats.update = (level == 'all') ? anima._createStatsMonitor('U', 1, 3 * yStep) : anima.stats._nopMonitor;
+    anima.stats.animate = (level == 'all') ? anima._createStatsMonitor('A', 1, 4 * yStep) : anima.stats._nopMonitor;
 }
 anima.Sound = Class.extend({
 
@@ -690,7 +692,11 @@ anima.RendererCSS3 = Class.extend({
             var position = (-column * node._size.width) + 'px '
                 + (-row * node._size.height) + 'px';
 
-            node._element$.css('background-position', position);
+            if (anima.isWebkit) {
+                node._domElement.style['background-position'] = position;
+            } else {
+                node._element$.css('background-position', position);
+            }
         }
     },
 
@@ -1358,6 +1364,11 @@ anima.Node = Class.extend({
         }
     },
 
+    destroy: function() {
+
+        this.getLayer().removeNode(this.getId());
+    },
+
     /* internal methods */
 
     _getImageUrls:function (urls) {
@@ -1532,7 +1543,7 @@ anima.Layer = Class.extend({
 
     removeNode:function (id) {
 
-        var node = this.getNode();
+        var node = this.getNode(id);
         if (node) {
             var count = this._nodes.length;
             for (var i = 0; i < count; i++) {
@@ -2799,9 +2810,7 @@ anima.Level = anima.Scene.extend({
         for (var id in this._nodesWithLogic) {
             node = this._nodesWithLogic[id];
             node._checkAwake();
-            if (node.logic) {
-                node.logic();
-            }
+            node.logic();
         }
     },
 
@@ -2994,6 +3003,12 @@ anima.Level = anima.Scene.extend({
         this._awakeListenerFn = listenerFn;
     },
 
+    isMoving:function () {
+
+        var velocity = this._body.GetLinearVelocity();
+        return velocity.Length() > 0.01;
+    },
+
     /* internal methods */
 
     _update:function () {
@@ -3011,13 +3026,13 @@ anima.Level = anima.Scene.extend({
 
     _checkAwake:function () {
 
-        var awake = this._body.IsAwake();
-        if (awake != this._wasAwake && this._awakeListenerFn) {
-            this._awakeListenerFn(this, awake);
+        if (this._awakeListenerFn) {
+            var awake = this._body.IsAwake();
+            if (awake != this._wasAwake) {
+                this._awakeListenerFn(this, awake);
+            }
+            this._wasAwake = awake;
         }
-        this._wasAwake = awake;
-
-        return awake;
     },
 
     _pointToVector:function (point, scale) {
@@ -3063,8 +3078,14 @@ anima.Level = anima.Scene.extend({
 
     _removeElement:function () {
 
+        this._body.SetActive(false);
+        this.hide();
+
         this.getLevel()._removeNodeWithLogic(this);
         this.getLevel()._removeDynamicBody(this);
+
+        this.getLevel().getWorld().DestroyBody(this._body);
+
         this._super();
     }
 });anima.ext.ScoreDisplay = Class.extend({

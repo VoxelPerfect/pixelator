@@ -11,7 +11,9 @@ function onEnemyHit(level, enemy) {
             pouf.show();
             animator.endAnimation(enemy.get('pulseId'));
             animator.endAnimation(enemy.get('moveId'));
-            enemy.fadeOut(1000);
+            enemy.fadeOut(1000, function() {
+                enemy.destroy();
+            });
 
             animator.addAnimation({
                 interpolateValuesFn:function (animator, t) {
@@ -21,10 +23,7 @@ function onEnemyHit(level, enemy) {
                 },
                 duration:1000,
                 onAnimationEndedFn:function (animation) {
-                    pouf.hide();
-                    var physicalBody = enemy.getPhysicalBody();
-                    physicalBody.SetActive(false);
-                    level.getWorld().DestroyBody(physicalBody);
+                    pouf.destroy();
                 }});
 
             level.getLayer('score').get('scoreDisplay').addScore(350);

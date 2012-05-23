@@ -10,12 +10,14 @@ function createObstacleBox(layer, id, type, posX, posY) {
         var physicalBody = body.getPhysicalBody();
         if (physicalBody.IsAwake()) {
             var center = physicalBody.GetPosition();
-            if (center.y > level.getPhysicalSize().height
-                || center.x < 0) {
+            if (center.y > level.getPhysicalSize().height) {
 
-                body.hide();
-                physicalBody.SetActive(false);
+                body.destroy();
             }
+        } else if (body.get('hit')) {
+            body.fadeOut(400, function () {
+                body.destroy();
+            });
         }
     };
 
@@ -41,15 +43,6 @@ function createObstacleBox(layer, id, type, posX, posY) {
     fixDef.filter.maskBits = CATEGORY_BOX_PLATFORM | CATEGORY_BOX | CATEGORY_USER;
 
     body.define(bodyDef, fixDef);
-
-    body.setAwakeListener(function (body, awake) {
-
-        if (!awake && body.get('hit')) {
-            body.fadeOut(400, function () {
-                body.getPhysicalBody().SetActive(false);
-            });
-        }
-    });
 
     return body;
 }
