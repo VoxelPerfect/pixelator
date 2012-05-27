@@ -1,40 +1,26 @@
-function resetCharacter(character, characterPosX, characterPosY) {
+pixelator.Character = anima.Body.extend({
 
-    if (character.get('inAction')) {
-        character.set('inAction', false);
+    init:function (characterPosX, characterPosY) {
 
-        var physicalBody = character.getPhysicalBody();
-        physicalBody.SetPositionAndAngle(new b2Vec2(characterPosX, characterPosY), 0);
-        physicalBody.SetLinearVelocity(new b2Vec2(0, 0));
-        physicalBody.SetAngularVelocity(0);
+        this._super('character');
 
-        physicalBody.SetAwake(true);
+        this._characterPosX = characterPosX;
+        this._characterPosY = characterPosY;
+    },
 
-        animateCharacter(character, 'start');
-    }
-}
-
-function createCharacter(layer) {
-
-    var level = layer.getScene();
-    var levelHeight = level.getPhysicalSize().height;
-
-    var characterPosX = 0.38 * WORLD_SCALE;
-    var characterPosY = levelHeight - 0.25 * WORLD_SCALE;
-
-    var body = new anima.Body('character');
-    body.logic = function () {
+    logic:function () {
 
         var body = this;
 
         var physicalBody = body.getPhysicalBody();
         if (physicalBody.IsAwake()) {
+            var level = this.getLevel();
             var center = physicalBody.GetPosition();
             if (center.y < (0 - body.getPhysicalSize().height * 2)
                 || center.y > level.getPhysicalSize().height
                 || center.x < 0) {
 
-                resetCharacter(body, characterPosX, characterPosY);
+                this.reset();
                 resetArrow(level);
             }
         }
@@ -42,30 +28,79 @@ function createCharacter(layer) {
         if (body.get('inAction')
             && (!physicalBody.IsAwake() || !body.isMoving())) {
 
-            resetCharacter(body, characterPosX, characterPosY);
+            this.reset();
             resetArrow(level);
         }
-    };
+    },
+
+    onBeginContact:function (otherBody) {
+
+        var otherId = otherBody.getId();
+
+        if (otherId.startsWith('box')) {
+            otherBody.set('hit', true);
+            var level = this.getLevel();
+            level.getLayer('score').get('scoreDisplay').addScore(10);
+        }
+    },
+
+    reset:function () {
+
+        if (this.get('inAction')) {
+            this.set('inAction', false);
+
+            var physicalBody = this.getPhysicalBody();
+            physicalBody.SetPositionAndAngle(new b2Vec2(this._characterPosX, this._characterPosY), 0);
+            physicalBody.SetLinearVelocity(new b2Vec2(0, 0));
+            physicalBody.SetAngularVelocity(0);
+
+            physicalBody.SetAwake(true);
+
+            this.setActiveBackground('start');
+        }
+    }
+});
+
+function createCharacter(layer) {
+
+    var level = layer.getScene();
+    var levelHeight = level.getPhysicalSize().height;
+
+    var characterPosX = 0.38 * WORLD_SCALE;
+    var characterPosY = levelHeight - 0.21 * WORLD_SCALE;
+
+    var body = new pixelator.Character(characterPosX, characterPosY);
     layer.addNode(body);
 
-    body.setSize(150, 190);
+    body.setSize(100, 120);
     body.addBackground(null, getImageUrl(level, 'character_start'), {
-        row:6,
-        columns:6,
-        totalSprites:31,
-        duration:1000
+        row:4,
+        columns:4,
+        totalSprites:14,
+        animation:{
+            duration:1000,
+            onAnimationEndedFn:function (animation) {
+                var character = animation.data.node;
+                character.setActiveBackground('idle');
+            }
+        }
     }, 'start');
     body.addBackground(null, getImageUrl(level, 'character_idle'), {
-        row:8,
-        columns:8,
-        totalSprites:61,
-        duration:1000
+        row:5,
+        columns:6,
+        totalSprites:26,
+        animation:{
+            duration:1000,
+            loop:true
+        }
     }, 'idle');
     body.addBackground(null, getImageUrl(level, 'character_attack'), {
-        row:8,
-        columns:8,
-        totalSprites:61,
-        duration:1000
+        row:4,
+        columns:4,
+        totalSprites:13,
+        animation:{
+            duration:1000
+        }
     }, 'attack');
 
     var bodyDef = new b2BodyDef;
@@ -93,7 +128,7 @@ function createCharacter(layer) {
                 if (body.get('inAction')
                     && (!physicalBody.IsAwake() || !body.isMoving())) {
 
-                    resetCharacter(body, characterPosX, characterPosY);
+                    body.reset();
                     resetArrow(level);
                 }
             }, 2000);
@@ -106,30 +141,4 @@ function createCharacter(layer) {
      var papakiaSound = new anima.Sound('sta_papakia', 'resources/sounds/sta_papakia_mas_re.mp3');
      body.set('sta_papakia', papakiaSound);
      */
-}
-
-function animateCharacter(character, type) {
-
-    var level = character.getLevel();
-    var animator = character.getAnimator();
-
-    var animationId = character.get('animationId');
-    var animationType = character.get('animationType');
-    if (animationId && animationType == type) {
-        return;
-    }
-
-    if (animationId) {
-        animator.endAnimation(animationId);
-    }
-
-    var duration = character.getSpriteSheetDuration();
-    character.set('animationType', type);
-    character.setActiveBackground(type);
-
-    animationId = character.animateSpriteSheet(null, null, duration, function () {
-        character.set('inRestAnimation', false);
-        character.set('animationId', null);
-    });
-    character.set('animationId', animationId);
 }

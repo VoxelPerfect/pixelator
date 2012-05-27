@@ -102,7 +102,7 @@ function createArrow(layer) {
                     arrow.fadeOut();
 
                     var animator = character.getAnimator();
-                    animateCharacter(character, 'attack');
+                    character.setActiveBackground('attack');
                     animator.addTask(function (loopTime) {
                         //character.get('sta_papakia').play();
                         character.applyImpulse(arrow.getAngle(), power);

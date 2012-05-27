@@ -1,17 +1,21 @@
-function createObstacleBox(layer, id, type, posX, posY) {
+pixelator.Obstacle = anima.Body.extend({
 
-    var level = layer.getScene();
+    init:function (obstacleType, id) {
 
-    var body = new anima.Body('box-' + type + '-' + id);
-    body.logic = function () {
+        this._super('box-' + obstacleType + '-' + id);
 
+        this._obstacleType = obstacleType;
+    },
+
+    logic:function () {
+
+        var level = this.getLevel();
         var body = this;
 
         var physicalBody = body.getPhysicalBody();
         if (physicalBody.IsAwake()) {
             var center = physicalBody.GetPosition();
             if (center.y > level.getPhysicalSize().height) {
-
                 body.destroy();
             }
         } else if (body.get('hit')) {
@@ -19,7 +23,18 @@ function createObstacleBox(layer, id, type, posX, posY) {
                 body.destroy();
             });
         }
-    };
+    },
+
+    onBeginContact:function (otherBody) {
+
+    }
+});
+
+function createObstacleBox(layer, id, type, posX, posY) {
+
+    var level = layer.getScene();
+
+    var body = new pixelator.Obstacle(type, id);
 
     layer.addNode(body);
 

@@ -1,85 +1,85 @@
-function createEnemyPouf(layer, id, enemyX, enemyY) {
+pixelator.Enemy = anima.Body.extend({
 
-    var level = layer.getScene();
+    onBeginContact:function (otherBody) {
 
-    var poufX = enemyX * level.getPhysicsScale();
-    var poufY = enemyY * level.getPhysicsScale();
+        var otherId = otherBody.getId();
 
-    var node = new anima.Node('pouf_' + id);
-    layer.addNode(node);
-
-    var poufidth = 100;
-    var poufHeight = 100;
-    node.setSize(poufidth, poufHeight);
-    node.addBackground(null, getImageUrl(layer.getScene(), 'pouf'), {
-        rows:3,
-        columns:5,
-        totalSprites:14
-    });
-    node.setPosition({
-        x:poufX,
-        y:poufY
-    });
-    node.setOrigin({
-        x:0.5,
-        y:0.5
-    });
-
-    node.hide();
-}
+        if (otherId == 'character') {
+            var level = this.getLevel();
+            if (this.get('hits')) {
+                if (this.get('hits') == 1) {
+                    this.set('hits', 2);
+                    //bodyB.get('boom').play();
+                    this.setActiveBackground('destroy');
+                    level.getLayer('score').get('scoreDisplay').addScore(350);
+                }
+            } else {
+                this.set('hits', 1);
+                //bodyB.get('boom').play();
+                this.setActiveBackground('hit');
+            }
+        }
+    }
+});
 
 function createEnemy(layer, id, posX, posY, animationOffset) {
 
     var level = layer.getScene();
     var levelHeight = level.getPhysicalSize().height;
 
-    var body = new anima.Body(id);
+    var body = new pixelator.Enemy(id);
     layer.addNode(body);
 
-    body.setSize(120, 120);
+    body.setSize(125, 125);
     body.addBackground(null, getImageUrl(level, 'enemy'), {
-        row:7,
+        row:8,
         columns:8,
-        totalSprites:50
-    });
+        totalSprites:50,
+        animation:{
+            duration:2000,
+            loop:true,
+            delay:animationOffset
+        }
+    }, 'normal');
+    body.addBackground(null, getImageUrl(level, 'enemy_hit'), {
+        row:5,
+        columns:6,
+        totalSprites:26,
+        animation:{
+            duration:2000,
+            loop:true
+        }
+    }, 'hit');
+    body.addBackground(null, getImageUrl(level, 'enemy_destroy'), {
+        row:5,
+        columns:6,
+        totalSprites:25,
+        animation:{
+            duration:2000,
+            onAnimationEndedFn:function (animation) {
+                var enemy = animation.data.node;
+                enemy.destroy();
+            }
+        }
+    }, 'destroy');
+
     var physicalSize = body.getPhysicalSize();
 
     var bodyDef = new b2BodyDef;
     bodyDef.type = b2Body.b2_staticBody;
     bodyDef.allowSleep = true;
-    //bodyDef.linearDamping = 2000.0;
     bodyDef.position.x = posX;
     bodyDef.position.y = posY;
-    //bodyDef.fixedRotation = false;
 
     var fixDef = new b2FixtureDef;
     fixDef.density = CHARACTER_DENSITY;
     fixDef.friction = 0.5;
     fixDef.restitution = 0.4;
     fixDef.shapeFile = 'resources/shapes/enemy.plist';
-    //fixDef.shape = new b2PolygonShape();
-    //fixDef.shape.SetAsBox(physicalSize.width / 2, physicalSize.height / 2);
     fixDef.filter.categoryBits = CATEGORY_ENEMY;
     fixDef.filter.maskBits = CATEGORY_USER | CATEGORY_BOX;
 
     body.define(bodyDef, fixDef);
-
-    var animator = body.getAnimator();
-    var moveId = animator.addAnimation({
-        interpolateValuesFn:function (animator, t) {
-            //if (t == 0) {
-            //    body.get('laugh').play();
-            //}
-            var characterSprites = body.getTotalSprites();
-            var index = t * (characterSprites - 1) / 2000;
-            body.setCurrentSprite(index);
-        },
-        delay:animationOffset,
-        duration:2000,
-        loop:true});
-    body.set('moveId', moveId);
-
-    createEnemyPouf(layer, id, posX - 0.5 * physicalSize.width, posY - 0.2 * physicalSize.height);
 
     /*
      var boomSound = new anima.Sound(id + 'boom', 'resources/sounds/boom.mp3');

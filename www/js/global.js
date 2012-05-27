@@ -1,10 +1,12 @@
+var pixelator = {};
+
 var canvas = null;
 
 // http://localhost/hobistic/anima/www/index.html?scale=18.0&density=2&impulse=300&gravity=9.81&damp=0.4&debug=true
 var DEBUG = anima.getRequestParameter('debug');
 var WORLD_SCALE = parseFloat(anima.getRequestParameter('scale', '18.0'));
 var CHARACTER_DENSITY = parseFloat(anima.getRequestParameter('density', '1.0'));
-var CHARACTER_IMPULSE = parseFloat(anima.getRequestParameter('impulse', '200.0'));
+var CHARACTER_IMPULSE = parseFloat(anima.getRequestParameter('impulse', '100.0'));
 var GRAVITY = parseFloat(anima.getRequestParameter('gravity', '9.81'));
 var LINEAR_DAMPING = parseFloat(anima.getRequestParameter('damp', '0.1'));
 

@@ -36,14 +36,14 @@
 						<key>polygons</key>
 						<array>
 							<array>	
-								<string>{ 15.000,89.000 }</string>	
-								<string>{ -29.000,85.000 }</string>	
-								<string>{ -64.000,22.000 }</string>	
-								<string>{ -56.000,-68.000 }</string>	
-								<string>{ -26.000,-89.000 }</string>	
-								<string>{ 39.000,-74.000 }</string>	
-								<string>{ 51.000,-44.000 }</string>	
-								<string>{ 56.000,41.000 }</string>
+								<string>{ 12.000,55.000 }</string>	
+								<string>{ -18.000,55.000 }</string>	
+								<string>{ -42.000,25.000 }</string>	
+								<string>{ -39.000,-42.000 }</string>	
+								<string>{ -16.000,-59.000 }</string>	
+								<string>{ 21.000,-51.000 }</string>	
+								<string>{ 31.000,-26.000 }</string>	
+								<string>{ 33.000,31.000 }</string>
 							</array>
 						</array>
                     </dict>

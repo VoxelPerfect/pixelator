@@ -1,6 +1,6 @@
 var anima = {};
 
-anima.version = '0.9.4 build 3';
+anima.version = '0.9.5 build 2';
 
 anima.isIE = false;
 anima.isIE8 = false;
@@ -984,6 +984,7 @@ anima.Node = Class.extend({
 
         this._backgrounds = {};
         this._background = null;
+        this._backgroundAnimationId = null;
 
         this._data = {};
 
@@ -1139,6 +1140,7 @@ anima.Node = Class.extend({
         var first = anima.isMapEmpty(this._backgrounds);
 
         this._backgrounds[name] = {
+            name: name,
             color:color,
             url:url,
             spriteSheet:anima.clone(spriteSheet),
@@ -1152,11 +1154,52 @@ anima.Node = Class.extend({
 
     setActiveBackground:function (name) {
 
+        if (this._backgroundAnimationId) {
+            this._animator.endAnimation(this._backgroundAnimationId);
+        }
+
         var background = this._backgrounds[name];
         if (background) {
             this._background = background;
             this._renderer.setBackground(this);
         }
+
+        var spriteSheet = this._background.spriteSheet;
+        if (spriteSheet && spriteSheet.animation) {
+            var animation = spriteSheet.animation;
+
+            var startFrame = animation.startFrame;
+            var endFrame = animation.endFrame;
+            if (!startFrame && !endFrame) {
+                startFrame = 0;
+                endFrame = spriteSheet.totalSprites - 1;
+            }
+            var duration = animation.duration;
+
+            var data = {
+                node:this,
+                startFrame:startFrame,
+                endFrame:endFrame
+            }
+
+            var userData = animation.data;
+            if (userData) {
+                data = $.extend(data, userData);
+            }
+
+            this._backgroundAnimationId = this._animator.addAnimation({
+                interpolateValuesFn:this._spriteSheetInterpolator,
+                duration:duration,
+                delay:animation.delay,
+                loop:animation.loop,
+                onAnimationEndedFn:animation.onAnimationEndedFn
+            }, null, data);
+        }
+    },
+
+    getActiveBackgroundName: function() {
+
+        return this._background ? this._background.name : null;
     },
 
     getTotalSprites:function () {
@@ -1199,27 +1242,6 @@ anima.Node = Class.extend({
                 this._renderer.setCurrentSprite(this, index);
             }
         }
-    },
-
-    animateSpriteSheet:function (startFrame, endFrame, duration, onAnimationEndedFn) {
-
-        if (!startFrame && !endFrame) {
-            startFrame = 0;
-            endFrame = this.getTotalSprites() - 1;
-        }
-        if (!duration) {
-            duration = this.getSpriteSheetDuration();
-        }
-
-        var me = this;
-        var animationId = this._animator.addAnimation({
-            interpolateValuesFn:function (animator, t) {
-                var index = (startFrame + t * (endFrame - startFrame)) / duration;
-                me.setCurrentSprite(index);
-            },
-            duration:duration,
-            onAnimationEndedFn:onAnimationEndedFn
-        });
     },
 
     getSize:function () {
@@ -1364,12 +1386,19 @@ anima.Node = Class.extend({
         }
     },
 
-    destroy: function() {
+    destroy:function () {
 
         this.getLayer().removeNode(this.getId());
     },
 
     /* internal methods */
+
+    _spriteSheetInterpolator:function (animator, t, animation) {
+
+        var data = animation.data;
+        var index = (data.startFrame + t * (data.endFrame - data.startFrame)) / animation.duration;
+        data.node.setCurrentSprite(index);
+    },
 
     _getImageUrls:function (urls) {
 
@@ -2187,9 +2216,10 @@ anima.Easing = {
         return animationId;
     },
 
-    addAnimation:function (animation, chainId) {
+    addAnimation:function (animation, chainId, data) {
 
         animation = anima.clone(animation);
+        animation.data = data;
         animation.id = this._lastAnimationID++;
 
         if (chainId) {
@@ -2320,7 +2350,7 @@ anima.Easing = {
         }
         if (animation.interpolateValuesFn) {
             try {
-                animation.interpolateValuesFn(this, t, animation.data);
+                animation.interpolateValuesFn(this, t, animation);
             } catch (e) {
                 anima.logException(e);
             }
@@ -2491,7 +2521,7 @@ anima.Canvas = anima.Node.extend({
 
     _FIXED_TIMESTEP:1.0 / anima.physicsFrameRate,
     _MINIMUM_TIMESTEP:1.0 / (anima.physicsFrameRate * 10.0),
-    _VELOCITY_ITERATIONS:8,
+    _VELOCITY_ITERATIONS:10,
     _POSITION_ITERATIONS:8,
     _MAXIMUM_NUMBER_OF_STEPS:anima.frameRate,
 
@@ -2734,7 +2764,6 @@ anima.Level = anima.Scene.extend({
         this._nodesWithLogic = [];
         this._dynamicBodies = [];
 
-        this._beginContactListenerFn = null;
         this._registerContactListener();
     },
 
@@ -2770,11 +2799,6 @@ anima.Level = anima.Scene.extend({
     getPhysicalSize:function () {
 
         return this._physicalSize;
-    },
-
-    setContactListener:function (beginContactListenerFn) {
-
-        this._beginContactListenerFn = beginContactListenerFn;
     },
 
     isAwake:function () {
@@ -2854,10 +2878,6 @@ anima.Level = anima.Scene.extend({
             if (bodyB.onBeginContact) {
                 bodyB.onBeginContact(bodyA);
             }
-
-            if (me._beginContactListenerFn) {
-                me._beginContactListenerFn(bodyA, bodyB);
-            }
         };
 
         listener.EndContact = function (contact) {
@@ -2904,11 +2924,13 @@ anima.Level = anima.Scene.extend({
 
     define:function (bodyDef, fixDef) {
 
+        var me = this;
+
         var world = this._layer._scene._world;
 
         this._body = world.CreateBody(bodyDef);
         this._body.SetUserData({
-            node:this
+            node:me
         });
 
         var level = this._layer._scene;
@@ -2921,13 +2943,11 @@ anima.Level = anima.Scene.extend({
             var file = fixDef.shapeFile;
             fixDef.shapeFile = null;
 
-            var me = this;
             anima.loadXML(file, function (data$) {
                 me._createShapes(data$, fixDef);
 
                 me._update();
                 me._renderer.updateAll(me);
-
             });
         } else {
             this._body.CreateFixture(fixDef);
@@ -3081,10 +3101,17 @@ anima.Level = anima.Scene.extend({
         this._body.SetActive(false);
         this.hide();
 
-        this.getLevel()._removeNodeWithLogic(this);
-        this.getLevel()._removeDynamicBody(this);
+        var level = this.getLevel();
+        level._removeNodeWithLogic(this);
+        level._removeDynamicBody(this);
 
-        this.getLevel().getWorld().DestroyBody(this._body);
+        if (this._body) {
+            var me = this;
+            this._animator.addTask(function () {
+                level.getWorld().DestroyBody(me._body);
+                me._body = null;
+            });
+        }
 
         this._super();
     }
@@ -3175,30 +3202,36 @@ anima.Level = anima.Scene.extend({
         var steps = points / increment;
         var duration = 100 * steps;
 
+        var data = {
+            pointsToAdd:points,
+            pointsAdded:0,
+            increment:increment,
+            duration:duration,
+            display:this
+        };
+
         var animator = this._layer.getAnimator();
         animator.addAnimation({
-            interpolateValuesFn:function (animator, t, data) {
-                var newPoints = data.increment;
-                if (data.pointsAdded + newPoints > data.pointsToAdd) {
-                    newPoints = data.pointsToAdd - data.pointsAdded;
-                }
-
-                var display = data.display;
-                display.setScore(display._currentScore + newPoints);
-
-                data.pointsAdded += newPoints;
-            },
-            duration:duration,
-            data:{
-                pointsToAdd:points,
-                pointsAdded:0,
-                increment:increment,
-                duration:duration,
-                display:this
-            }}, 'add-score');
+            interpolateValuesFn:this._scoreInterpolator,
+            duration:duration
+        }, 'add-score', data);
     },
 
     /* internal methods */
+
+    _scoreInterpolator:function (animator, t, animation) {
+
+        var data = animation.data;
+        var newPoints = data.increment;
+        if (data.pointsAdded + newPoints > data.pointsToAdd) {
+            newPoints = data.pointsToAdd - data.pointsAdded;
+        }
+
+        var display = data.display;
+        display.setScore(display._currentScore + newPoints);
+
+        data.pointsAdded += newPoints;
+    },
 
     _calculatePosition:function (level) {
 
