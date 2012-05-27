@@ -58,22 +58,27 @@ pixelator.Character = anima.Body.extend({
 
             this.setActiveBackground('start');
         }
-    },
-
-    onAwakeChanged:function (awake) {
-
-        if (!awake) {
-            var physicalBody = this.getPhysicalBody();
-            this.getAnimator().addTask(function () {
-                if (this.get('inAction')
-                    && (!physicalBody.IsAwake() || !this.isMoving())) {
-
-                    this.reset();
-                    resetArrow(this.getLevel());
-                }
-            }, 2000);
-        }
     }
+
+//    onAwakeChanged:function (awake) {
+//
+//
+//        if (!awake) {
+//            var physicalBody = this.getPhysicalBody();
+//            var data = {
+//                nodeId:this.getId()
+//            };
+//            this.getAnimator().addTask(function (animator, animation) {
+//                var character = animator.getNode(animation.data.nodeId);
+//                if (character.get('inAction')
+//                    && (!physicalBody.IsAwake() || !character.isMoving())) {
+//
+//                    character.reset();
+//                    resetArrow(character.getLevel());
+//                }
+//            }, 2000, data);
+//        }
+//    }
 });
 
 function createCharacter(layer) {

@@ -63,13 +63,13 @@ function createObstaclePlatform(layer) {
     var level = layer.getScene();
     var levelHeight = level.getPhysicalSize().height;
 
-    var posX = 0.9 * WORLD_SCALE;
+    var posX = 0.99 * WORLD_SCALE;
     var posY = levelHeight - 0.03 * WORLD_SCALE;
 
     var body = new anima.Body('box-platform');
     layer.addNode(body);
 
-    body.setSize(350, 22);
+    body.setSize(410, 22);
     //body.addBackground('red');
     var physicalSize = body.getPhysicalSize();
 
@@ -98,20 +98,22 @@ function createObstacles(layer) {
 
     var platform = createObstaclePlatform(layer);
     var y0 = platform.getPosition().y - platform.getSize().height / 2 - 40;
-    var x0 = platform.getPosition().x - platform.getSize().width / 2 + 70;
+    var x0 = platform.getPosition().x - platform.getSize().width / 2 + 92;
 
     var height = layer.getScene().getSize().height;
 
     var ps = platform.getLevel().getPhysicsScale();
 
-    var id, type, posX, posY, box;
+    var id, type, posX, posY, box, typeIndex;
     for (var i = 0; i < columns; i++) {
         posX = x0 + (i * (68 + 50));
         for (var j = 0; j < (rows - 2 * i); j++) {
             id = i + '-' + j;
-            type = (j % 2) ? 'white' : 'bomb';
-            posY = y0 - j * 60;
+            typeIndex = (i % 2) ? (j % 2) : 1 - (j % 2);
+            type = typeIndex ? 'white' : 'bomb';
+            posY = y0 - j * 59;
 
+            posX += (j % 2) ? 6 : -10;
             box = createObstacleBox(layer, id, type, posX / ps, posY / ps);
         }
     }
