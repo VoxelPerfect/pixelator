@@ -2,9 +2,9 @@ pixelator.Enemy = anima.Body.extend({
 
     onBeginContact:function (otherBody) {
 
-        var otherId = otherBody.getId();
+        var otherBodyId = otherBody.getId();
 
-        if (otherId == 'character') {
+        if (otherBodyId == 'character') {
             var level = this.getLevel();
             if (this.get('hits')) {
                 if (this.get('hits') == 1) {
@@ -56,8 +56,8 @@ function createEnemy(layer, id, posX, posY, animationOffset) {
         totalSprites:25,
         animation:{
             duration:2000,
-            onAnimationEndedFn:function (animation) {
-                var enemy = animation.data.node;
+            onAnimationEndedFn:function (animator, animation) {
+                var enemy = animator.getNode(animation.data.nodeId);
                 enemy.destroy();
             }
         }

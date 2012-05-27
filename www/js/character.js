@@ -35,9 +35,9 @@ pixelator.Character = anima.Body.extend({
 
     onBeginContact:function (otherBody) {
 
-        var otherId = otherBody.getId();
+        var otherBodyId = otherBody.getId();
 
-        if (otherId.startsWith('box')) {
+        if (otherBodyId.startsWith('box')) {
             otherBody.set('hit', true);
             var level = this.getLevel();
             level.getLayer('score').get('scoreDisplay').addScore(10);
@@ -57,6 +57,21 @@ pixelator.Character = anima.Body.extend({
             physicalBody.SetAwake(true);
 
             this.setActiveBackground('start');
+        }
+    },
+
+    onAwakeChanged:function (awake) {
+
+        if (!awake) {
+            var physicalBody = this.getPhysicalBody();
+            this.getAnimator().addTask(function () {
+                if (this.get('inAction')
+                    && (!physicalBody.IsAwake() || !this.isMoving())) {
+
+                    this.reset();
+                    resetArrow(this.getLevel());
+                }
+            }, 2000);
         }
     }
 });
@@ -79,8 +94,8 @@ function createCharacter(layer) {
         totalSprites:14,
         animation:{
             duration:1000,
-            onAnimationEndedFn:function (animation) {
-                var character = animation.data.node;
+            onAnimationEndedFn:function (animator, animation) {
+                var character = animator.getNode(animation.data.nodeId);
                 character.setActiveBackground('idle');
             }
         }
@@ -119,21 +134,6 @@ function createCharacter(layer) {
     fixDef.filter.maskBits = CATEGORY_BOX | CATEGORY_USER_PLATFORM | CATEGORY_ENEMY;
 
     body.define(bodyDef, fixDef);
-
-    body.setAwakeListener(function (body, awake) {
-
-        if (!awake) {
-            var physicalBody = body.getPhysicalBody();
-            body.getAnimator().addTask(function () {
-                if (body.get('inAction')
-                    && (!physicalBody.IsAwake() || !body.isMoving())) {
-
-                    body.reset();
-                    resetArrow(level);
-                }
-            }, 2000);
-        }
-    });
 
     /*
      var gaziaSound = new anima.Sound('gazia', 'resources/sounds/gazia.mp3');

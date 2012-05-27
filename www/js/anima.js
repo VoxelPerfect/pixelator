@@ -1,6 +1,6 @@
 var anima = {};
 
-anima.version = '0.9.5 build 2';
+anima.version = '0.9.5 build 4';
 
 anima.isIE = false;
 anima.isIE8 = false;
@@ -940,6 +940,16 @@ anima.RendererIE = anima.RendererCSS3.extend({
 
 anima.defaultRenderer = anima.isIE8 ? new anima.RendererIE() : new anima.RendererCSS3();
 
+anima._spriteSheetInterpolator = function (animator, t, animation) {
+
+    var data = animation.data;
+    var index = (data.startFrame + t * (data.endFrame - data.startFrame)) / animation.duration;
+    var node = animator.getNode(data.nodeId);
+    if (node) {
+        node.setCurrentSprite(index);
+    }
+};
+
 anima.Node = Class.extend({
 
     init:function (id, options) {
@@ -1105,7 +1115,7 @@ anima.Node = Class.extend({
             },
             duration:duration,
             easing:anima.Easing.easeInOutSine,
-            onAnimationEndedFn:function (animation) {
+            onAnimationEndedFn:function (animator, animation) {
                 me.hide();
                 if (callbackFn) {
                     callbackFn();
@@ -1140,7 +1150,7 @@ anima.Node = Class.extend({
         var first = anima.isMapEmpty(this._backgrounds);
 
         this._backgrounds[name] = {
-            name: name,
+            name:name,
             color:color,
             url:url,
             spriteSheet:anima.clone(spriteSheet),
@@ -1177,18 +1187,13 @@ anima.Node = Class.extend({
             var duration = animation.duration;
 
             var data = {
-                node:this,
+                nodeId:this._id,
                 startFrame:startFrame,
                 endFrame:endFrame
             }
 
-            var userData = animation.data;
-            if (userData) {
-                data = $.extend(data, userData);
-            }
-
             this._backgroundAnimationId = this._animator.addAnimation({
-                interpolateValuesFn:this._spriteSheetInterpolator,
+                interpolateValuesFn:anima._spriteSheetInterpolator,
                 duration:duration,
                 delay:animation.delay,
                 loop:animation.loop,
@@ -1197,7 +1202,7 @@ anima.Node = Class.extend({
         }
     },
 
-    getActiveBackgroundName: function() {
+    getActiveBackgroundName:function () {
 
         return this._background ? this._background.name : null;
     },
@@ -1393,13 +1398,6 @@ anima.Node = Class.extend({
 
     /* internal methods */
 
-    _spriteSheetInterpolator:function (animator, t, animation) {
-
-        var data = animation.data;
-        var index = (data.startFrame + t * (data.endFrame - data.startFrame)) / animation.duration;
-        data.node.setCurrentSprite(index);
-    },
-
     _getImageUrls:function (urls) {
 
         for (var name in this._backgrounds) {
@@ -1494,7 +1492,8 @@ anima._dragHandler = function (event) {
             }
             break;
     }
-}
+};
+
 anima.Layer = Class.extend({
 
     init:function (id) {
@@ -1547,6 +1546,11 @@ anima.Layer = Class.extend({
 
     addNode:function (node) {
 
+        if (this._scene._nodeMap[node._id]) {
+            anima.log('duplicate node id "' + node._id + '" in scene "' + this._scene._id + '"');
+            return;
+        }
+
         node._layer = this;
         node._animator = this._animator;
         node._canvas = this._canvas;
@@ -1563,6 +1567,8 @@ anima.Layer = Class.extend({
         if (node.logic) {
             node.getLevel()._addNodeWithLogic(node);
         }
+
+        this._scene._nodeMap[node._id] = node;
     },
 
     getNode:function (id) {
@@ -1576,7 +1582,7 @@ anima.Layer = Class.extend({
         if (node) {
             var count = this._nodes.length;
             for (var i = 0; i < count; i++) {
-                if (this._nodes[i]._id = id) {
+                if (this._nodes[i]._id == id) {
                     this._nodes.splice(i, 1);
                     delete this._nodeMap[id];
                     node._removeElement();
@@ -1584,6 +1590,8 @@ anima.Layer = Class.extend({
                 }
             }
             node._layer = null;
+
+            delete this._scene._nodeMap[node._id];
         }
     },
 
@@ -1625,6 +1633,7 @@ anima.Scene = anima.Node.extend({
 
         this._layers = [];
         this._layerMap = [];
+        this._nodeMap = [];
 
         this._viewport = null;
 
@@ -1662,7 +1671,7 @@ anima.Scene = anima.Node.extend({
         if (layer) {
             var count = this._layers.length;
             for (var i = 0; i < count; i++) {
-                if (this._layers[i]._id = id) {
+                if (this._layers[i]._id == id) {
                     this._layers.splice(i, 1);
                     delete this._layerMap[id];
                     layer._removeElement();
@@ -1671,6 +1680,11 @@ anima.Scene = anima.Node.extend({
             }
             layer._scene = null;
         }
+    },
+
+    getNode:function (id) {
+
+        return this._nodeMap[id];
     },
 
     setSize:function (postponeTransform) {
@@ -1759,7 +1773,7 @@ anima.Scene = anima.Node.extend({
                     },
                     duration:duration,
                     easing:easing,
-                    onAnimationEndedFn:function (animation) {
+                    onAnimationEndedFn:function (animator, animation) {
                         if (callbackFn) {
                             callbackFn(animation, viewport);
                         }
@@ -2167,8 +2181,9 @@ anima.Easing = {
     }
 };anima.Animator = Class.extend({
 
-    init:function (adaptive) {
+    init:function (canvas, adaptive) {
 
+        this._canvas = canvas;
         this._adaptive = adaptive;
 
         this._animationQueue = [];
@@ -2177,6 +2192,12 @@ anima.Easing = {
 
         this._animationLoopTimerID = null;
         this._animationTimeStart = 0;
+    },
+
+    getNode: function(id) {
+
+        var scene = this._canvas.getCurrentScene();
+        return (scene != null) ? scene.getNode(id) : null;
     },
 
     addTask:function (taskFn, delay, data) {
@@ -2383,7 +2404,7 @@ anima.Easing = {
                 animationQueue.splice(i, 1);
 
                 if (animation.onAnimationEndedFn) {
-                    animation.onAnimationEndedFn(animation);
+                    animation.onAnimationEndedFn(this, animation);
                 }
 
             }
@@ -2401,7 +2422,7 @@ anima.Canvas = anima.Node.extend({
 
         this._renderer.createCanvas(this);
 
-        this._animator = new anima.Animator(adaptive);
+        this._animator = new anima.Animator(this, adaptive);
 
         this._scenes = [];
         this._sceneMap = [];
@@ -2485,7 +2506,7 @@ anima.Canvas = anima.Node.extend({
         if (scene) {
             var count = this._scenes.length;
             for (var i = 0; i < count; i++) {
-                if (this._scenes[i]._id = id) {
+                if (this._scenes[i]._id == id) {
                     this._scenes.splice(i, 1);
                     delete this._sceneMap[id];
                     scene._removeElement();
@@ -2780,7 +2801,12 @@ anima.Level = anima.Scene.extend({
             debugDraw.SetDrawScale(this._physicsScale);
             debugDraw.SetFillAlpha(0.5);
             debugDraw.SetLineThickness(1.0);
-            debugDraw.SetFlags(b2DebugDraw.e_shapeBit | b2DebugDraw.e_jointBit | b2DebugDraw.e_centerOfMassBit);
+            debugDraw.SetFlags(b2DebugDraw.e_shapeBit
+                | b2DebugDraw.e_jointBit
+                | b2DebugDraw.e_aabbBit
+                | b2DebugDraw.e_pairBit
+                | b2DebugDraw.e_centerOfMassBit
+                | b2DebugDraw.e_controllerBit);
 
             this._world.SetDebugDraw(debugDraw);
         }
@@ -2869,8 +2895,11 @@ anima.Level = anima.Scene.extend({
 
         listener.BeginContact = function (contact) {
 
-            var bodyA = contact.GetFixtureA().GetBody().GetUserData().node;
-            var bodyB = contact.GetFixtureB().GetBody().GetUserData().node;
+            var bodyAId = contact.GetFixtureA().GetBody().GetUserData().id;
+            var bodyA = me.getNode(bodyAId);
+
+            var bodyBId = contact.GetFixtureB().GetBody().GetUserData().id;
+            var bodyB = me.getNode(bodyBId);
 
             if (bodyA.onBeginContact) {
                 bodyA.onBeginContact(bodyB);
@@ -2904,7 +2933,6 @@ anima.Level = anima.Scene.extend({
         this._body = null;
 
         this._wasAwake = false;
-        this._awakeListenerFn = null;
 
         this._origin.x = 0.5;
         this._origin.y = 0.5;
@@ -2924,13 +2952,11 @@ anima.Level = anima.Scene.extend({
 
     define:function (bodyDef, fixDef) {
 
-        var me = this;
-
         var world = this._layer._scene._world;
 
         this._body = world.CreateBody(bodyDef);
         this._body.SetUserData({
-            node:me
+            id:this.getId()
         });
 
         var level = this._layer._scene;
@@ -2943,6 +2969,7 @@ anima.Level = anima.Scene.extend({
             var file = fixDef.shapeFile;
             fixDef.shapeFile = null;
 
+            var me = this;
             anima.loadXML(file, function (data$) {
                 me._createShapes(data$, fixDef);
 
@@ -3018,11 +3045,6 @@ anima.Level = anima.Scene.extend({
         return this._body.GetFixtureList().GetAABB();
     },
 
-    setAwakeListener:function (listenerFn) {
-
-        this._awakeListenerFn = listenerFn;
-    },
-
     isMoving:function () {
 
         var velocity = this._body.GetLinearVelocity();
@@ -3046,10 +3068,10 @@ anima.Level = anima.Scene.extend({
 
     _checkAwake:function () {
 
-        if (this._awakeListenerFn) {
+        if (this.onAwakeChanged) {
             var awake = this._body.IsAwake();
             if (awake != this._wasAwake) {
-                this._awakeListenerFn(this, awake);
+                this.onAwakeChanged(awake);
             }
             this._wasAwake = awake;
         }
@@ -3098,8 +3120,8 @@ anima.Level = anima.Scene.extend({
 
     _removeElement:function () {
 
-        this._body.SetActive(false);
         this.hide();
+        this._body.SetActive(false);
 
         var level = this.getLevel();
         level._removeNodeWithLogic(this);

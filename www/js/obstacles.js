@@ -23,10 +23,6 @@ pixelator.Obstacle = anima.Body.extend({
                 body.destroy();
             });
         }
-    },
-
-    onBeginContact:function (otherBody) {
-
     }
 });
 
