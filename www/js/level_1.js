@@ -26,7 +26,7 @@ pixelator.Level_1 = anima.Level.extend({
 
         var characterPosX = 0.38 * WORLD_SCALE;
         var characterPosY = this.getPhysicalSize().height - 0.21 * WORLD_SCALE;
-        new pixelator.Character(layer, characterPosX, characterPosY);
+        var character = new pixelator.Character(layer, characterPosX, characterPosY);
 
         createEnemy(layer, 'enemy-1', 1.5 * WORLD_SCALE, 0.5 * WORLD_SCALE, 0);
         createEnemy(layer, 'enemy-2', 1.8 * WORLD_SCALE, 0.6 * WORLD_SCALE, 1200);
@@ -58,5 +58,14 @@ pixelator.Level_1 = anima.Level.extend({
         });
         scoreDisplay.setScore(0);
         this.getLayer('score').set('scoreDisplay', scoreDisplay);
+    },
+
+    onLoaded:function () {
+
+        this.getNode('character').setActiveBackground('start');
+
+        this.getNode('enemy-1').setActiveBackground('normal');
+        this.getNode('enemy-2').setActiveBackground('normal');
+        this.getNode('enemy-3').setActiveBackground('normal');
     }
 });

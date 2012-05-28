@@ -2761,7 +2761,6 @@ function _anima_update() {
 
     window.requestAnimationFrame(_anima_update, '_anima_update()');
 
-    var canvas;
     for (var i in anima._canvases) {
         anima._canvases[i]._update();
     }
