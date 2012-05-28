@@ -1,11 +1,13 @@
 pixelator.Character = anima.Body.extend({
 
-    init:function (characterPosX, characterPosY) {
+    init:function (layer, characterPosX, characterPosY) {
 
         this._super('character');
 
         this._characterPosX = characterPosX;
         this._characterPosY = characterPosY;
+
+        this._create(layer);
     },
 
     logic:function () {
@@ -58,7 +60,7 @@ pixelator.Character = anima.Body.extend({
 
             this.setActiveBackground('start');
         }
-    }
+    },
 
 //    onAwakeChanged:function (awake) {
 //
@@ -79,71 +81,70 @@ pixelator.Character = anima.Body.extend({
 //            }, 2000, data);
 //        }
 //    }
+
+    /* internal methods */
+
+    _create:function (layer) {
+
+        var level = layer.getScene();
+        var levelHeight = level.getPhysicalSize().height;
+
+        layer.addNode(this);
+
+        this.setSize(100, 120);
+        this.addBackground(null, getImageUrl(level, 'character_start'), {
+            row:4,
+            columns:4,
+            totalSprites:14,
+            animation:{
+                duration:1000,
+                onAnimationEndedFn:function (animator, animation) {
+                    var character = animator.getNode(animation.data.nodeId);
+                    character.setActiveBackground('idle');
+                }
+            }
+        }, 'start');
+        this.addBackground(null, getImageUrl(level, 'character_idle'), {
+            row:5,
+            columns:6,
+            totalSprites:26,
+            animation:{
+                duration:1000,
+                loop:true
+            }
+        }, 'idle');
+        this.addBackground(null, getImageUrl(level, 'character_attack'), {
+            row:4,
+            columns:4,
+            totalSprites:13,
+            animation:{
+                duration:1000
+            }
+        }, 'attack');
+
+        var bodyDef = new b2BodyDef;
+        bodyDef.type = b2Body.b2_dynamicBody;
+        bodyDef.allowSleep = true;
+        bodyDef.linearDamping = LINEAR_DAMPING;
+        bodyDef.position.x = this._characterPosX;
+        bodyDef.position.y = this._characterPosY;
+
+        var fixDef = new b2FixtureDef;
+        fixDef.density = CHARACTER_DENSITY;
+        fixDef.friction = 0.5;
+        fixDef.restitution = 0.2;
+        fixDef.shapeFile = 'resources/shapes/character.plist';
+        fixDef.filter.categoryBits = CATEGORY_USER;
+        fixDef.filter.maskBits = CATEGORY_BOX | CATEGORY_USER_PLATFORM | CATEGORY_ENEMY;
+
+        this.define(bodyDef, fixDef);
+
+        /*
+         var gaziaSound = new anima.Sound('gazia', 'resources/sounds/gazia.mp3');
+         body.set('gazia', gaziaSound);
+         var papakiaSound = new anima.Sound('sta_papakia', 'resources/sounds/sta_papakia_mas_re.mp3');
+         body.set('sta_papakia', papakiaSound);
+         */
+    }
 });
 
-function createCharacter(layer) {
-
-    var level = layer.getScene();
-    var levelHeight = level.getPhysicalSize().height;
-
-    var characterPosX = 0.38 * WORLD_SCALE;
-    var characterPosY = levelHeight - 0.21 * WORLD_SCALE;
-
-    var body = new pixelator.Character(characterPosX, characterPosY);
-    layer.addNode(body);
-
-    body.setSize(100, 120);
-    body.addBackground(null, getImageUrl(level, 'character_start'), {
-        row:4,
-        columns:4,
-        totalSprites:14,
-        animation:{
-            duration:1000,
-            onAnimationEndedFn:function (animator, animation) {
-                var character = animator.getNode(animation.data.nodeId);
-                character.setActiveBackground('idle');
-            }
-        }
-    }, 'start');
-    body.addBackground(null, getImageUrl(level, 'character_idle'), {
-        row:5,
-        columns:6,
-        totalSprites:26,
-        animation:{
-            duration:1000,
-            loop:true
-        }
-    }, 'idle');
-    body.addBackground(null, getImageUrl(level, 'character_attack'), {
-        row:4,
-        columns:4,
-        totalSprites:13,
-        animation:{
-            duration:1000
-        }
-    }, 'attack');
-
-    var bodyDef = new b2BodyDef;
-    bodyDef.type = b2Body.b2_dynamicBody;
-    bodyDef.allowSleep = true;
-    bodyDef.linearDamping = LINEAR_DAMPING;
-    bodyDef.position.x = characterPosX;
-    bodyDef.position.y = characterPosY;
-
-    var fixDef = new b2FixtureDef;
-    fixDef.density = CHARACTER_DENSITY;
-    fixDef.friction = 0.5;
-    fixDef.restitution = 0.2;
-    fixDef.shapeFile = 'resources/shapes/character.plist';
-    fixDef.filter.categoryBits = CATEGORY_USER;
-    fixDef.filter.maskBits = CATEGORY_BOX | CATEGORY_USER_PLATFORM | CATEGORY_ENEMY;
-
-    body.define(bodyDef, fixDef);
-
-    /*
-     var gaziaSound = new anima.Sound('gazia', 'resources/sounds/gazia.mp3');
-     body.set('gazia', gaziaSound);
-     var papakiaSound = new anima.Sound('sta_papakia', 'resources/sounds/sta_papakia_mas_re.mp3');
-     body.set('sta_papakia', papakiaSound);
-     */
-}

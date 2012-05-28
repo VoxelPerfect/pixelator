@@ -1622,11 +1622,26 @@ anima.Layer = Class.extend({
 });
 anima.Scene = anima.Node.extend({
 
-    init:function (id) {
+    init:function (id, setId) {
 
         this._super(id);
 
+        this._setId = setId;
         this._type = 'Scene';
+    },
+
+    getSetId:function () {
+
+        return this._setId;
+    },
+
+    load:function () {
+
+        if (this._nodeMap) {
+            for (var id in this._nodeMap) {
+                this._nodeMap[id].destroy();
+            }
+        }
 
         this._origin.x = 0;
         this._origin.y = 0;
@@ -2474,6 +2489,8 @@ anima.Canvas = anima.Node.extend({
 
         var newScene = this.getScene(id);
         if (newScene) {
+            newScene.load();
+
             var me = this;
             this._loadImages(newScene, progressFn, function () {
                 if (!duration) {
@@ -2767,9 +2784,9 @@ anima.start = function (callbackFn) {
 };
 anima.Level = anima.Scene.extend({
 
-    init:function (id, physicalWidth, gravity) {
+    init:function (id, setId, physicalWidth, gravity) {
 
-        this._super(id);
+        this._super(id, setId);
 
         this._physicalSize = {
             width:physicalWidth,
@@ -2777,15 +2794,26 @@ anima.Level = anima.Scene.extend({
         };
         this._physicsScale = 1.0;
 
-        this._world = new b2World(
-            gravity, // gravity
-            true  // allow sleep
-        );
+        this._gravity = gravity;
+    },
+
+    load:function () {
+
+        this._super();
+
+        if (this._world) {
+            this._world.ClearForces();
+        } else {
+            this._world = new b2World(
+                this._gravity, // gravity
+                true  // allow sleep
+            );
+
+            this._registerContactListener();
+        }
 
         this._nodesWithLogic = [];
         this._dynamicBodies = [];
-
-        this._registerContactListener();
     },
 
     setSize:function (postponeTransform) {

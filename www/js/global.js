@@ -1,7 +1,5 @@
 var pixelator = {};
 
-var canvas = null;
-
 // http://localhost/hobistic/anima/www/index.html?scale=18.0&density=2&impulse=300&gravity=9.81&damp=0.4&debug=true
 var DEBUG = anima.getRequestParameter('debug');
 var WORLD_SCALE = parseFloat(anima.getRequestParameter('scale', '18.0'));
@@ -15,7 +13,7 @@ function getImageUrl(level, imageName, extension) {
     if (!extension) {
         extension = 'png';
     }
-    return 'resources/images/' + level.getId() + '/' + imageName + '.' + extension;
+    return 'resources/images/' + level.getSetId() + '/' + imageName + '.' + extension;
 }
 
 function debug(layer, message) {
