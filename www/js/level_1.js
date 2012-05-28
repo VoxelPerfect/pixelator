@@ -36,6 +36,7 @@ pixelator.Level_1 = anima.Level.extend({
         this.addLayer(layer);
         createArrow(layer);
         createDebugBox(layer);
+        this._createPauseButton(layer);
 
         var scoreDisplay = new anima.ext.ScoreDisplay(this, {
             layerId:'score',
@@ -67,5 +68,32 @@ pixelator.Level_1 = anima.Level.extend({
         this.getNode('enemy-1').setActiveBackground('normal');
         this.getNode('enemy-2').setActiveBackground('normal');
         this.getNode('enemy-3').setActiveBackground('normal');
+    },
+
+    /* internal methods */
+
+    _createPauseButton:function (layer) {
+
+        var button = new anima.Node('button_pause');
+        layer.addNode(button);
+        button.setSize(89, 77);
+        button.addBackground(null, getImageUrl(this, 'pause'));
+        button.setPosition({
+            x:10,
+            y:10
+        });
+        button.setOrigin({
+            x:0,
+            y:0
+        });
+
+        var me = this;
+        button.on('vclick', function () {
+            me.getCanvas().setCurrentScene(me.get('levelSet'));
+        });
+
+        button.css({
+            'cursor':'pointer'
+        })
     }
 });

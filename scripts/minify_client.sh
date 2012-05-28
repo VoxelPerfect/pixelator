@@ -29,7 +29,13 @@ echo "    copied libraries"
 
 cp ../www/index.html ../deploy
 sed -i '' 's/<script type="text\/javascript" src="js\/anima.js"><\/script>//g' ../deploy/index.html
-sed -i '' 's/<script type="text\/javascript" src="js\/score.js"><\/script>//g' ../deploy/index.html
+
+sed -i '' 's/<script type="text\/javascript" src="js\/global.js"><\/script>//g' ../deploy/index.html
+sed -i '' 's/<script type="text\/javascript" src="js\/enemy.js"><\/script>//g' ../deploy/index.html
+sed -i '' 's/<script type="text\/javascript" src="js\/character.js"><\/script>//g' ../deploy/index.html
+sed -i '' 's/<script type="text\/javascript" src="js\/launcher.js"><\/script>//g' ../deploy/index.html
+sed -i '' 's/<script type="text\/javascript" src="js\/obstacles.js"><\/script>//g' ../deploy/index.html
+sed -i '' 's/<script type="text\/javascript" src="js\/level_1.js"><\/script>//g' ../deploy/index.html
 sed -i '' 's/<script type="text\/javascript" src="js\/main.js"><\/script>/<script type="text\/javascript" src="app.min.js"><\/script>/g' ../deploy/index.html
 echo "    updated index.html"
 echo "    OK!"

@@ -20,9 +20,9 @@ pixelator.LevelSet_1 = anima.Scene.extend({
         var layer = new anima.Layer('level_buttons');
         this.addLayer(layer);
 
-        this._createLevelButton(layer, 'level_1', 100, 100);
-        this._createLevelButton(layer, 'level_2', 400, 200);
-        this._createLevelButton(layer, 'level_3', 800, 300);
+        this._createLevelButton(layer, 'level_1', 448, 120);
+        this._createLevelButton(layer, 'level_2', 769, 210);
+        this._createLevelButton(layer, 'level_3', 1016, 312);
     },
 
     /* internal methods */
@@ -78,11 +78,60 @@ pixelator.LevelSet_1 = anima.Scene.extend({
     }
 });
 
+pixelator.Welcome = anima.Scene.extend({
+
+    init:function (canvas) {
+
+        this._super('welcome');
+        canvas.addScene(this);
+
+        this._canvas = canvas;
+
+        this.addBackground('black', 'resources/images/splash.jpg');
+    },
+
+    load:function () {
+
+        this._super();
+
+        var layer = new anima.Layer('buttons');
+        this.addLayer(layer);
+
+        this._createPlayButton(layer, (1575 - 83) / 2, 3 * (787 - 70) / 4);
+    },
+
+    _createPlayButton:function (layer, x, y) {
+
+        var button = new anima.Node('button_play');
+        layer.addNode(button);
+        button.setSize(83, 70);
+        button.addBackground(null, 'resources/images/play.png');
+        button.setPosition({
+            x:x,
+            y:y
+        });
+        button.setOrigin({
+            x:0,
+            y:0
+        });
+
+        var me = this;
+        button.on('vclick', function () {
+            me._canvas.setCurrentScene('levelset_1', 500);
+        });
+
+        button.css({
+            'cursor':'pointer'
+        })
+    }
+});
+
 $('#mainPage').live('pageshow', function (event, ui) {
 
     var canvas = new anima.Canvas('main-canvas', DEBUG);
     canvas.setSize(1575, 787);
 
+    new pixelator.Welcome(canvas);
     new pixelator.LevelSet_1(canvas);
 
     $('.ui-loader').css({
@@ -92,6 +141,7 @@ $('#mainPage').live('pageshow', function (event, ui) {
     });
 
     anima.start(function () {
-        canvas.setCurrentScene('levelset_1', 500);
+        canvas.setCurrentScene('welcome', 500);
+        $('body').removeClass('splash');
     });
 });

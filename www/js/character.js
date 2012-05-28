@@ -15,16 +15,15 @@ pixelator.Character = anima.Body.extend({
         var body = this;
 
         var physicalBody = body.getPhysicalBody();
-        if (physicalBody.IsAwake()) {
-            var level = this.getLevel();
-            var center = physicalBody.GetPosition();
-            if (center.y < (0 - body.getPhysicalSize().height * 2)
-                || center.y > level.getPhysicalSize().height
-                || center.x < 0) {
+        var level = this.getLevel();
+        var center = physicalBody.GetPosition();
+        if (center.y < (0 - body.getPhysicalSize().height * 2)
+            || center.y > level.getPhysicalSize().height
+            || center.x < 0) {
 
-                this.reset();
-                resetArrow(level);
-            }
+            this.reset();
+            resetArrow(level);
+            return;
         }
 
         if (body.get('inAction')
@@ -48,18 +47,16 @@ pixelator.Character = anima.Body.extend({
 
     reset:function () {
 
-        if (this.get('inAction')) {
-            this.set('inAction', false);
+        this.set('inAction', false);
 
-            var physicalBody = this.getPhysicalBody();
-            physicalBody.SetPositionAndAngle(new b2Vec2(this._characterPosX, this._characterPosY), 0);
-            physicalBody.SetLinearVelocity(new b2Vec2(0, 0));
-            physicalBody.SetAngularVelocity(0);
+        var physicalBody = this.getPhysicalBody();
+        physicalBody.SetPositionAndAngle(new b2Vec2(this._characterPosX, this._characterPosY), 0);
+        physicalBody.SetLinearVelocity(new b2Vec2(0, 0));
+        physicalBody.SetAngularVelocity(0);
 
-            physicalBody.SetAwake(true);
+        physicalBody.SetAwake(true);
 
-            this.setActiveBackground('start');
-        }
+        this.setActiveBackground('start');
     },
 
 //    onAwakeChanged:function (awake) {
