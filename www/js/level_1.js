@@ -2,7 +2,9 @@ pixelator.Level_1 = anima.Level.extend({
 
     init:function (canvas) {
 
-        this._super('level_1', 'levelset_1', 2.0 * WORLD_SCALE, new b2Vec2(0, GRAVITY)); // 2m wide, gravity = 9.81 m/sec2
+        this._super('level_1', 2.0 * WORLD_SCALE, new b2Vec2(0, GRAVITY)); // 2m wide, gravity = 9.81 m/sec2
+
+        this.set('levelSet', 'levelset_1');
 
         canvas.addScene(this);
         this.addBackground('black', getImageUrl(this, 'background', 'jpg'));
@@ -24,7 +26,7 @@ pixelator.Level_1 = anima.Level.extend({
 
         var characterPosX = 0.38 * WORLD_SCALE;
         var characterPosY = this.getPhysicalSize().height - 0.21 * WORLD_SCALE;
-        var character = new pixelator.Character(layer, characterPosX, characterPosY);
+        new pixelator.Character(layer, characterPosX, characterPosY);
 
         createEnemy(layer, 'enemy-1', 1.5 * WORLD_SCALE, 0.5 * WORLD_SCALE, 0);
         createEnemy(layer, 'enemy-2', 1.8 * WORLD_SCALE, 0.6 * WORLD_SCALE, 1200);

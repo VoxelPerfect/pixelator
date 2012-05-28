@@ -1,6 +1,6 @@
 var anima = {};
 
-anima.version = '0.9.5 build 4';
+anima.version = '0.9.6 build 1';
 
 anima.isIE = false;
 anima.isIE8 = false;
@@ -1622,17 +1622,11 @@ anima.Layer = Class.extend({
 });
 anima.Scene = anima.Node.extend({
 
-    init:function (id, setId) {
+    init:function (id) {
 
         this._super(id);
 
-        this._setId = setId;
         this._type = 'Scene';
-    },
-
-    getSetId:function () {
-
-        return this._setId;
     },
 
     load:function () {
@@ -2739,13 +2733,18 @@ anima.defaultProgressReporter = function (percent) {
     loadIcon$.html('<div class="progress-percent">' + percent + '</div>');
 }
 
+anima._resizeCanvas = function (animator, animation) {
+    animation.data.canvas._resize();
+};
 anima.onResize = function () {
 
-    $.each(anima._canvases, function (index, value) {
-        value.getAnimator().addTask(function () {
-            value._resize();
+    var canvas;
+    for (var i in anima._canvases) {
+        canvas = anima._canvases[i];
+        canvas.getAnimator().addTask(anima._resizeCanvas, null, {
+            canvas:canvas
         });
-    });
+    }
 };
 
 $(window).resize(function () {
@@ -2762,9 +2761,10 @@ function _anima_update() {
 
     window.requestAnimationFrame(_anima_update, '_anima_update()');
 
-    $.each(anima._canvases, function (index, value) {
-        value._update();
-    });
+    var canvas;
+    for (var i in anima._canvases) {
+        anima._canvases[i]._update();
+    }
 }
 
 anima.start = function (callbackFn) {
@@ -2784,9 +2784,9 @@ anima.start = function (callbackFn) {
 };
 anima.Level = anima.Scene.extend({
 
-    init:function (id, setId, physicalWidth, gravity) {
+    init:function (id, physicalWidth, gravity) {
 
-        this._super(id, setId);
+        this._super(id);
 
         this._physicalSize = {
             width:physicalWidth,
@@ -2951,7 +2951,14 @@ anima.Level = anima.Scene.extend({
 
         this._world.SetContactListener(listener);
     }
-});anima.Body = anima.Node.extend({
+});anima._destroyBodyTask = function (animator, animation) {
+
+    var data = animation.data;
+    data.level.getWorld().DestroyBody(data.node._body);
+    data.node._body = null;
+};
+
+anima.Body = anima.Node.extend({
 
     init:function (id) {
 
@@ -3156,16 +3163,16 @@ anima.Level = anima.Scene.extend({
         level._removeDynamicBody(this);
 
         if (this._body) {
-            var me = this;
-            this._animator.addTask(function () {
-                level.getWorld().DestroyBody(me._body);
-                me._body = null;
+            this._animator.addTask(anima._destroyBodyTask, null, {
+                level:level,
+                node:this
             });
         }
 
         this._super();
     }
-});anima.ext.ScoreDisplay = Class.extend({
+});
+anima.ext.ScoreDisplay = Class.extend({
 
     init:function (level, config) {
 

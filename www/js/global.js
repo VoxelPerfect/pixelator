@@ -13,7 +13,7 @@ function getImageUrl(level, imageName, extension) {
     if (!extension) {
         extension = 'png';
     }
-    return 'resources/images/' + level.getSetId() + '/' + imageName + '.' + extension;
+    return 'resources/images/' + level.get('levelSet') + '/' + imageName + '.' + extension;
 }
 
 function debug(layer, message) {
