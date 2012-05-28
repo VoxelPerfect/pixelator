@@ -59,26 +59,6 @@ pixelator.Character = anima.Body.extend({
         this.setActiveBackground('start');
     },
 
-//    onAwakeChanged:function (awake) {
-//
-//
-//        if (!awake) {
-//            var physicalBody = this.getPhysicalBody();
-//            var data = {
-//                nodeId:this.getId()
-//            };
-//            this.getAnimator().addTask(function (animator, animation) {
-//                var character = animator.getNode(animation.data.nodeId);
-//                if (character.get('inAction')
-//                    && (!physicalBody.IsAwake() || !character.isMoving())) {
-//
-//                    character.reset();
-//                    resetArrow(character.getLevel());
-//                }
-//            }, 2000, data);
-//        }
-//    }
-
     /* internal methods */
 
     _create:function (layer) {
@@ -97,7 +77,9 @@ pixelator.Character = anima.Body.extend({
                 duration:1000,
                 onAnimationEndedFn:function (animator, animation) {
                     var character = animator.getNode(animation.data.nodeId);
-                    character.setActiveBackground('idle');
+                    if (character) {
+                        character.setActiveBackground('idle');
+                    }
                 }
             }
         }, 'start');

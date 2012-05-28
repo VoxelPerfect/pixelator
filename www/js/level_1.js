@@ -59,6 +59,30 @@ pixelator.Level_1 = anima.Level.extend({
         });
         scoreDisplay.setScore(0);
         this.getLayer('score').set('scoreDisplay', scoreDisplay);
+
+        var timeDisplay = new anima.ext.ScoreDisplay(this, {
+            layerId:'time',
+            spriteSheetUrl:getImageUrl(this, 'numbers'),
+            spriteSheet:{
+                rows:8,
+                columns:9,
+                totalSprites:68
+            },
+            posX:1050,
+            posY:50,
+            digitWidth:46,
+            digitHeight:61,
+            digitGap:0,
+            digitCount:2,
+            digitAnimation:{
+                duration:300,
+                frameCount:6
+            }
+        });
+        timeDisplay.setScore(30);
+        this.getLayer('time').set('timeDisplay', timeDisplay);
+
+        // TODO add an animation to decrease seconds!!
     },
 
     onLoaded:function () {
