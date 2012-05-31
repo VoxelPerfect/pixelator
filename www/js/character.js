@@ -104,7 +104,9 @@ pixelator.Character = anima.Body.extend({
         var bodyDef = new b2BodyDef;
         bodyDef.type = b2Body.b2_dynamicBody;
         bodyDef.allowSleep = true;
-        bodyDef.linearDamping = LINEAR_DAMPING;
+        if (LINEAR_DAMPING > 0) {
+            bodyDef.linearDamping = LINEAR_DAMPING;
+        }
         bodyDef.position.x = this._characterPosX;
         bodyDef.position.y = this._characterPosY;
 

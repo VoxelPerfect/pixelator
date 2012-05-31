@@ -1,6 +1,6 @@
 var anima = {};
 
-anima.version = '0.9.6 build 1';
+anima.version = '0.9.6 build 2';
 
 anima.isIE = false;
 anima.isIE8 = false;
@@ -42,9 +42,10 @@ anima.isWebkit = ($.browser.webkit || $.browser.safari);
 anima.frameRate = 60; // fps
 anima.physicsFrameRate = anima.frameRate;
 
+anima._userAgent = navigator.userAgent.toLowerCase();
+
 if (!window.requestAnimationFrame) {
     window.requestAnimationFrame = (function () {
-
         return window.webkitRequestAnimationFrame ||
             window.mozRequestAnimationFrame ||
             window.oRequestAnimationFrame ||
@@ -368,7 +369,7 @@ anima._createStatsMonitor = function (name, mode, y) {
     }
 
     return monitor;
-}
+};
 
 anima.initializeStats = function () {
 
@@ -376,13 +377,57 @@ anima.initializeStats = function () {
 
     var level = anima._statsLevel;
 
-
     anima.stats.total = (level == 'all' || level == 'fps') ? anima._createStatsMonitor(null, 0, 0) : anima.stats._nopMonitor;
     anima.stats.physics = (level == 'all') ? anima._createStatsMonitor('P', 1, 1 * yStep) : anima.stats._nopMonitor;
     anima.stats.logic = (level == 'all') ? anima._createStatsMonitor('L', 1, 2 * yStep) : anima.stats._nopMonitor;
     anima.stats.update = (level == 'all') ? anima._createStatsMonitor('U', 1, 3 * yStep) : anima.stats._nopMonitor;
     anima.stats.animate = (level == 'all') ? anima._createStatsMonitor('A', 1, 4 * yStep) : anima.stats._nopMonitor;
-}
+};
+
+/**
+ * http://kangax.github.com/iseventsupported/
+ */
+anima.isEventSupported = (function () {
+
+    var TAGNAMES = {
+        'select':'input', 'change':'input',
+        'submit':'form', 'reset':'form',
+        'error':'img', 'load':'img', 'abort':'img'
+    };
+
+    function isEventSupported(eventName, element) {
+
+        element = element || document.createElement(TAGNAMES[eventName] || 'div');
+        eventName = 'on' + eventName;
+
+        var isSupported = (eventName in element);
+
+        if (!isSupported) {
+            // if it has no `setAttribute` (i.e. doesn't implement Node interface), try generic element
+            if (!element.setAttribute) {
+                element = document.createElement('div');
+            }
+            if (element.setAttribute && element.removeAttribute) {
+                element.setAttribute(eventName, '');
+                isSupported = typeof element[eventName] == 'function';
+
+                // if property was created, "remove it" (by setting value to `undefined`)
+                if (typeof element[eventName] != 'undefined') {
+                    element[eventName] = undef;
+                }
+                element.removeAttribute(eventName);
+            }
+        }
+
+        element = null;
+        return isSupported;
+    }
+
+    return isEventSupported;
+})();
+
+anima.hasTouchEvents = anima.isEventSupported('touchstart');
+
 anima.Sound = Class.extend({
 
     init:function (id, url, loop) {
@@ -1442,6 +1487,50 @@ anima.Node = Class.extend({
     }
 });
 
+anima._dragStartHandler = function (node, event) {
+
+    if (node._dragging && node._dragged) {
+        node._dragging = false;
+        node._dragged = false;
+        if (node._draggingHandler) {
+            node._draggingHandler(event, 'dragend', node);
+        }
+    } else {
+        node._dragging = true;
+        node._dragged = false;
+        if (node._draggingHandler) {
+            node._draggingHandler(event, 'dragstart', node);
+        }
+    }
+};
+
+anima._dragMoveHandler = function (node, event) {
+
+    if (node._dragging) {
+        event.stopPropagation();
+        anima.preventDefault(event);
+
+        node._dragged = true;
+        if (node._dragging && node._draggingHandler) {
+            node._draggingHandler(event, 'dragmove', node);
+        }
+    }
+};
+
+anima._dragEndHandler = function (node, event) {
+
+    if (node._dragging && node._dragged) {
+        event.stopPropagation();
+        anima.preventDefault(event);
+
+        node._dragging = false;
+        node._dragged = false;
+        if (node._draggingHandler) {
+            node._draggingHandler(event, 'dragend', node);
+        }
+    }
+};
+
 anima._dragHandler = function (event) {
 
     var node = event.data;
@@ -1451,44 +1540,15 @@ anima._dragHandler = function (event) {
     switch (type) {
         case 'vmousedown':
             if (which == 1 || which == 0) {
-                if (node._dragging && node._dragged) {
-                    node._dragging = false;
-                    node._dragged = false;
-                    if (node._draggingHandler) {
-                        node._draggingHandler(event, 'dragend', node);
-                    }
-                } else {
-                    node._dragging = true;
-                    node._dragged = false;
-                    if (node._draggingHandler) {
-                        node._draggingHandler(event, 'dragstart', node);
-                    }
-                }
+                anima._dragStartHandler(node, event);
             }
             break;
         case 'vmousemove':
-            if (node._dragging) {
-                event.stopPropagation();
-                anima.preventDefault(event);
-
-                node._dragged = true;
-                if (node._dragging && node._draggingHandler) {
-                    node._draggingHandler(event, 'dragmove', node);
-                }
-            }
+            anima._dragMoveHandler(node, event);
             break;
         case 'vmouseup':
             if (which == 1 || which == 0) {
-                if (node._dragging && node._dragged) {
-                    event.stopPropagation();
-                    anima.preventDefault(event);
-
-                    node._dragging = false;
-                    node._dragged = false;
-                    if (node._draggingHandler) {
-                        node._draggingHandler(event, 'dragend', node);
-                    }
-                }
+                anima._dragEndHandler(node, event);
             }
             break;
     }
@@ -2553,8 +2613,8 @@ anima.Canvas = anima.Node.extend({
 
     _FIXED_TIMESTEP:1.0 / anima.physicsFrameRate,
     _MINIMUM_TIMESTEP:1.0 / (anima.physicsFrameRate * 10.0),
-    _VELOCITY_ITERATIONS:10,
-    _POSITION_ITERATIONS:8,
+    _VELOCITY_ITERATIONS:7,
+    _POSITION_ITERATIONS:7,
     _MAXIMUM_NUMBER_OF_STEPS:anima.frameRate,
 
     _step:function (level) {
@@ -2562,7 +2622,7 @@ anima.Canvas = anima.Node.extend({
         var world = level._world;
 
         /**/ anima.stats.physics.begin();
-        if (anima.physicsFrameRate != anima.frameRate) {
+        if (anima.physicsFrameRate > anima.frameRate) {
             var frameTime = 1.0 / anima.frameRate;
             var stepsPerformed = 0;
             while ((frameTime > 0.0) && (stepsPerformed < this._MAXIMUM_NUMBER_OF_STEPS)) {
@@ -2755,7 +2815,7 @@ $(window).resize(function () {
 $(window).bind('orientationchange', function (event, orientation) {
 
     anima.onResize();
-})
+});
 
 function _anima_update() {
 
@@ -2774,7 +2834,7 @@ anima.start = function (callbackFn) {
 
     anima._initializeSound(function () {
         anima.onResize();
-        window.requestAnimationFrame(_anima_update, '_anima_update()');
+        _anima_update();
 
         if (callbackFn) {
             callbackFn.call();
@@ -2808,6 +2868,22 @@ anima.Level = anima.Scene.extend({
                 true  // allow sleep
             );
 
+            if (this._canvas._debug) {
+                var debugDraw = new b2DebugDraw();
+                debugDraw.SetSprite(this._renderer.getHtml5CanvasContext(this._canvas));
+                debugDraw.SetDrawScale(this._physicsScale);
+                debugDraw.SetFillAlpha(0.5);
+                debugDraw.SetLineThickness(1.0);
+                debugDraw.SetFlags(b2DebugDraw.e_shapeBit
+                    | b2DebugDraw.e_jointBit
+                    | b2DebugDraw.e_aabbBit
+                    | b2DebugDraw.e_pairBit
+                    | b2DebugDraw.e_centerOfMassBit
+                    | b2DebugDraw.e_controllerBit);
+
+                this._world.SetDebugDraw(debugDraw);
+            }
+
             this._registerContactListener();
         }
 
@@ -2821,22 +2897,6 @@ anima.Level = anima.Scene.extend({
 
         this._physicsScale = this._size.width / this._physicalSize.width;
         this._physicalSize.height = this._size.height * this._physicalSize.width / this._size.width;
-
-        if (this._canvas._debug) {
-            var debugDraw = new b2DebugDraw();
-            debugDraw.SetSprite(this._renderer.getHtml5CanvasContext(this._canvas));
-            debugDraw.SetDrawScale(this._physicsScale);
-            debugDraw.SetFillAlpha(0.5);
-            debugDraw.SetLineThickness(1.0);
-            debugDraw.SetFlags(b2DebugDraw.e_shapeBit
-                | b2DebugDraw.e_jointBit
-                | b2DebugDraw.e_aabbBit
-                | b2DebugDraw.e_pairBit
-                | b2DebugDraw.e_centerOfMassBit
-                | b2DebugDraw.e_controllerBit);
-
-            this._world.SetDebugDraw(debugDraw);
-        }
     },
 
     getWorld:function () {
@@ -2886,7 +2946,6 @@ anima.Level = anima.Scene.extend({
         var node;
         for (var id in this._nodesWithLogic) {
             node = this._nodesWithLogic[id];
-            node._checkAwake();
             node.logic();
         }
     },
@@ -2965,8 +3024,6 @@ anima.Body = anima.Node.extend({
 
         this._physicalSize = null;
         this._body = null;
-
-        this._wasAwake = false;
 
         this._origin.x = 0.5;
         this._origin.y = 0.5;
@@ -3098,17 +3155,6 @@ anima.Body = anima.Node.extend({
         this._angle = -this._body.GetAngle();
 
         this._renderer.updateTransform(this);
-    },
-
-    _checkAwake:function () {
-
-        if (this.onAwakeChanged) {
-            var awake = this._body.IsAwake();
-            if (awake != this._wasAwake) {
-                this.onAwakeChanged(awake);
-            }
-            this._wasAwake = awake;
-        }
     },
 
     _pointToVector:function (point, scale) {
