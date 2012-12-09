@@ -8,7 +8,7 @@
 
 cd ../anima/scripts
 ./minify_client.sh
-cd ../scripts
+cd ../../scripts
 
 cp ../anima/deploy/anima.js ../www/js
 

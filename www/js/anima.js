@@ -1,3 +1,11 @@
+/*
+ * Copyright 2012 Kostas Karolemeas
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
+
 var anima = {};
 
 anima.version = '0.9.6 build 2';
@@ -428,6 +436,14 @@ anima.isEventSupported = (function () {
 
 anima.hasTouchEvents = anima.isEventSupported('touchstart');
 
+/*
+ * Copyright 2012 Kostas Karolemeas
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
+
 anima.Sound = Class.extend({
 
     init:function (id, url, loop) {
@@ -540,6 +556,14 @@ anima._initializeSound = function (callback) {
             }
         });
 };
+/*
+ * Copyright 2012 Kostas Karolemeas
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
+
 anima.RendererCSS3 = Class.extend({
 
     init:function () {
@@ -984,6 +1008,14 @@ anima.RendererIE = anima.RendererCSS3.extend({
 });
 
 anima.defaultRenderer = anima.isIE8 ? new anima.RendererIE() : new anima.RendererCSS3();
+
+/*
+ * Copyright 2012 Kostas Karolemeas
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
 
 anima._spriteSheetInterpolator = function (animator, t, animation) {
 
@@ -1554,6 +1586,14 @@ anima._dragHandler = function (event) {
     }
 };
 
+/*
+ * Copyright 2012 Kostas Karolemeas
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
+
 anima.Layer = Class.extend({
 
     init:function (id) {
@@ -1680,6 +1720,14 @@ anima.Layer = Class.extend({
         this._nodeMap = [];
     }
 });
+/*
+ * Copyright 2012 Kostas Karolemeas
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
+
 anima.Scene = anima.Node.extend({
 
     init:function (id) {
@@ -2248,7 +2296,15 @@ anima.Easing = {
         'ease-in-out-circ':{css:'cubic-bezier(0.785, 0.135, 0.150, 0.860)', fn:$.bez([0.785, 0.135, 0.150, 0.860])},
         'ease-in-out-back':{css:'cubic-bezier(0.680, -0.550, 0.265, 1.550)', fn:$.bez([0.680, -0.550, 0.265, 1.550])}
     }
-};anima.Animator = Class.extend({
+};/*
+ * Copyright 2012 Kostas Karolemeas
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
+
+anima.Animator = Class.extend({
 
     init:function (canvas, adaptive) {
 
@@ -2479,7 +2535,15 @@ anima.Easing = {
             }
         }
     }
-});anima._canvases = [];
+});/*
+ * Copyright 2012 Kostas Karolemeas
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
+
+anima._canvases = [];
 
 anima.Canvas = anima.Node.extend({
 
@@ -2841,6 +2905,14 @@ anima.start = function (callbackFn) {
         }
     });
 };
+/*
+ * Copyright 2012 Kostas Karolemeas
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
+
 anima.Level = anima.Scene.extend({
 
     init:function (id, physicalWidth, gravity) {
@@ -3009,7 +3081,15 @@ anima.Level = anima.Scene.extend({
 
         this._world.SetContactListener(listener);
     }
-});anima._destroyBodyTask = function (animator, animation) {
+});/*
+ * Copyright 2012 Kostas Karolemeas
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
+
+anima._destroyBodyTask = function (animator, animation) {
 
     var data = animation.data;
     data.level.getWorld().DestroyBody(data.node._body);
@@ -3217,6 +3297,14 @@ anima.Body = anima.Node.extend({
         this._super();
     }
 });
+/*
+ * Copyright 2012 Kostas Karolemeas
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
+
 anima.ext.ScoreDisplay = Class.extend({
 
     init:function (level, config) {
@@ -3380,7 +3468,15 @@ anima.ext.ScoreDisplay = Class.extend({
 
         return node;
     }
-});anima.ext.SlideShow = Class.extend({
+});/*
+ * Copyright 2012 Kostas Karolemeas
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
+
+anima.ext.SlideShow = Class.extend({
 
     init:function (config) {
 
