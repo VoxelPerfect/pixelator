@@ -6,11 +6,11 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #
 
-cd ../../anima/scripts
+cd ../anima/scripts
 ./minify_client.sh
-cd ../../pixelator/scripts
+cd ../scripts
 
-cp ../../anima/deploy/anima.js ../www/js
+cp ../anima/deploy/anima.js ../www/js
 
 echo "Packaging Pixelator..."
 
@@ -18,7 +18,7 @@ rm -rf ../deploy
 mkdir ../deploy
 
 cat ../www/js/anima.js ../www/js/global.js ../www/js/enemy.js ../www/js/character.js ../www/js/launcher.js ../www/js/obstacles.js ../www/js/level_1.js ../www/js/main.js >> app.js
-/usr/local/lib/node_modules/uglify-js/bin/uglifyjs --max-line-len 1024 --mangle-toplevel --reserved-names "_anima_update,soundManager" --unsafe --output ../deploy/app.min.js app.js
+uglifyjs --max-line-len 1024 --mangle-toplevel --reserved-names "_anima_update,soundManager" --unsafe --output ../deploy/app.min.js app.js
 rm app.js
 echo "    compressed javascript files"
 

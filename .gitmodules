@@ -1,0 +1,3 @@
+[submodule "anima"]
+	path = anima
+	url = https://VoxelPerfect@github.com/VoxelPerfect/anima.git
